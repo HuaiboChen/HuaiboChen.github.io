@@ -192,7 +192,7 @@ h2 { font-size: 1.5rem; border-bottom: 2px solid var(--light-gray); padding-bott
   font-size: 0.95rem;
   line-height: 1.4;
 }
-.ul-edu .course .date {
+.ul-edu .date {
   font-weight: 400;
   color: var(--muted);
   font-size: 0.95rem;
