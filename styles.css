@@ -175,13 +175,15 @@ h2 { font-size: 1.5rem; border-bottom: 2px solid var(--light-gray); padding-bott
 .ul-interests .description, .ul-edu .description { margin: 0; }
 .ul-interests .course, .ul-edu .course {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.4;
 }
+
 .ul-interests .institution, .ul-edu .institution {
   margin: 0;
   color: var(--muted);
   font-size: 0.95rem;
+  font-weight: 700;
   line-height: 1.4;
 }
 .ul-interests .details, .ul-edu .details {
@@ -260,8 +262,9 @@ ul { padding-left: 1.1rem; }
 }
 
 .coursework-title {
-  font-size: 0.9em;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.4;
   margin-bottom: 5px;
 }
 
