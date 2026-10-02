@@ -274,7 +274,7 @@ ul { padding-left: 1.1rem; }
   column-gap: 14px;
   row-gap: 3px;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.90rem;
   line-height: 1.4;
 }
 @media (max-width: 700px) {
