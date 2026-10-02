@@ -181,7 +181,6 @@ h2 { font-size: 1.5rem; border-bottom: 2px solid var(--light-gray); padding-bott
 
 .ul-interests .institution, .ul-edu .institution {
   margin: 0;
-  color: var(--muted);
   font-size: 0.95rem;
   font-weight: 700;
   line-height: 1.4;
@@ -284,8 +283,8 @@ ul { padding-left: 1.1rem; }
 }
 .course-item {
   display: grid;
-  grid-template-columns: 4.2em 1fr;
-  column-gap: 6px;
+  grid-template-columns: 3.8em 1fr;
+  column-gap: 4px;
   align-items: start;
 }
 
