@@ -270,7 +270,7 @@ ul { padding-left: 1.1rem; }
 
 .coursework-grid {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
+  grid-template-columns: 0.85fr 1.15fr;
   column-gap: 14px;
   row-gap: 3px;
   color: var(--muted);
