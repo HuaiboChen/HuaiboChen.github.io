@@ -255,6 +255,55 @@ ul { padding-left: 1.1rem; }
   text-decoration: none;
 }
 .pub-tag:hover { background: #d4d4d4; text-decoration: none; }
+.pub-tag + .pub-tag { margin-left: 4px; }
+
+/* ===== Blog post page ===== */
+.post {
+  max-width: 760px;
+  padding-bottom: 32px;
+}
+.post-back {
+  display: inline-block;
+  margin: 24px 0 4px;
+  font-size: 0.9rem;
+}
+.post-title {
+  font-size: 2.1rem;
+  line-height: 1.25;
+  margin: 10px 0 10px;
+}
+.post-meta {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin: 0 0 26px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--light-gray);
+}
+.post-lede {
+  font-size: 1.08rem;
+  color: #333;
+}
+.post h2 {
+  font-size: 1.32rem;
+  margin-top: 34px;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.post h3 {
+  font-size: 1.05rem;
+  color: var(--mit-red);
+  margin-top: 22px;
+}
+.post p { margin: 0 0 14px; }
+.post ul { margin: 0 0 14px; padding-left: 1.3rem; }
+.post li { margin-bottom: 8px; }
+.post-footnote {
+  margin-top: 34px;
+  padding-top: 14px;
+  border-top: 2px solid var(--light-gray);
+  color: var(--muted);
+  font-size: 0.92rem;
+}
 
 .coursework {
   margin-top: 9px;
@@ -294,4 +343,210 @@ ul { padding-left: 1.1rem; }
 
 .course-name {
   min-width: 0;
+}
+
+/* ===== Blog post: language toggle ===== */
+.lang-switch {
+  display: inline-flex;
+  border: 1px solid #e0e0e0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0 0 18px;
+  font-size: 0.88rem;
+}
+.lang-switch a {
+  padding: 5px 14px;
+  color: var(--muted);
+  background: #fff;
+  transition: background .15s ease, color .15s ease;
+  white-space: nowrap;
+}
+.lang-switch a + a { border-left: 1px solid #e0e0e0; }
+.lang-switch a:hover { background: var(--light-gray); text-decoration: none; }
+.lang-switch a[aria-current="page"] {
+  background: var(--mit-red);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== Blog post: figures ===== */
+.post-figure {
+  margin: 26px 0 28px;
+  text-align: center;
+}
+.post-figure img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #ececec;
+  border-radius: 4px;
+  background: #fff;
+}
+.post-figure figcaption {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  text-align: left;
+}
+.post-figure figcaption strong { color: var(--text); }
+.post-figure.figure-wide img { border: none; }
+
+/* ===== Blog post: tables ===== */
+.table-wrap {
+  margin: 26px 0 28px;
+  overflow-x: auto;
+}
+.post-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.87rem;
+  line-height: 1.45;
+}
+.post-table caption {
+  caption-side: bottom;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  text-align: left;
+}
+.post-table caption strong { color: var(--text); }
+.post-table th,
+.post-table td {
+  padding: 7px 10px;
+  text-align: right;
+  white-space: nowrap;
+}
+.post-table th:first-child,
+.post-table td:first-child,
+.post-table th:nth-child(2),
+.post-table td:nth-child(2) {
+  text-align: left;
+}
+.post-table thead th {
+  border-bottom: 2px solid var(--mit-red);
+  font-weight: 700;
+}
+.post-table tbody td { border-bottom: 1px solid #eee; }
+/* Highlight the FSOL rows. Bolding marks the best value per column
+   (via <strong> on the winning cells), so it must not come from the row. */
+.post-table tbody tr.row-ours td,
+.post-table tbody tr.row-ours th {
+  background: #fdf5f6;
+}
+.post-table tbody tr.group-start td { border-top: 1px solid #ddd; }
+
+/* ===== Blog post: equations ===== */
+.post-eq {
+  margin: 18px 0;
+  text-align: center;
+  font-size: 1.02rem;
+  overflow-x: auto;
+}
+
+/* ===== Blog post: citation block ===== */
+.cite-block { margin: 20px 0 0; }
+.cite-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--light-gray);
+  border: 1px solid #e4e4e4;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.cite-copy {
+  border: 1px solid #d8d8d8;
+  background: #fff;
+  color: var(--mit-red);
+  border-radius: 5px;
+  padding: 4px 11px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.cite-copy:hover { background: var(--light-gray); border-color: var(--mit-red); }
+.cite-block pre {
+  margin: 0;
+  padding: 14px 12px;
+  background: #fcfcfc;
+  border: 1px solid #e4e4e4;
+  border-radius: 0 0 6px 6px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  tab-size: 2;
+}
+.cite-block code { font-family: inherit; }
+
+/* Narrower figure for single-panel plots (≈2/3 page width) */
+.post-figure.figure-two-thirds img {
+  width: 66%;
+  min-width: 320px;
+}
+@media (max-width: 640px) {
+  .post-figure.figure-two-thirds img { width: 100%; min-width: 0; }
+}
+
+/* KaTeX display equations */
+.post-eq .katex-display { margin: 0; }
+.post-eq .katex { font-size: 1.12em; }
+
+/* Merged category column (rowspan) in post tables */
+.post-table .cat-cell {
+  vertical-align: middle;
+  text-align: left;
+  font-weight: 700;
+  white-space: nowrap;
+  border-right: 1px solid #e8e8e8;
+}
+/* Group separators span the full row, including the merged category cell */
+.post-table tbody tr.group-start > th,
+.post-table tbody tr.group-start > td {
+  border-top: 1px solid #ddd;
+}
+/* A merged cell spans its whole group, so it must not draw the per-row
+   bottom rule that .post-table tbody td uses -- that line would cut across
+   the group. Group edges come from tr.group-start instead. */
+.post-table tbody th.cat-cell { border-bottom: none; }
+
+
+/* ===== Blog post: author list and affiliations ===== */
+.post-authors {
+  margin: 0 0 10px;
+  font-size: 0.97rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+.post-authors .author-me { font-weight: 700; }
+.post-authors sup {
+  font-size: 0.72em;
+  color: var(--mit-red);
+  padding-left: 1px;
+}
+.post-affil {
+  margin: 0 0 6px;
+  font-size: 0.86rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.post-affil li { list-style: none; }
+.post-affil ol { margin: 0; padding: 0; }
+.post-affil sup {
+  font-size: 0.78em;
+  color: var(--mit-red);
+  margin-right: 3px;
+}
+.post-venue {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin: 0 0 26px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--light-gray);
 }

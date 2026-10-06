@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="zh-Hans">
+
+<head>
+  <link rel="stylesheet" href="../../styles.css">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>如何在部署经验上在线训练Agent？&middot; 陈淮博</title>
+  <link rel="icon" type="image/png" href="../../image/mit-logo.png" sizes="32x32">
+  <link rel="shortcut icon" type="image/png" href="../../image/mit-logo.png">
+  <link rel="alternate" hreflang="en" href="online-learning-from-experience.html">
+  <link rel="alternate" hreflang="zh-Hans" href="online-learning-from-experience.zh.html">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"
+    integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"
+    integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+    integrity="sha512-iWiuBS5nt6r60fCz26Nd0Zqe0nbk1ZTIQbl3Kv7kYsX+yKMUFHzjaH2+AnM6vp2Xs+gNmaBAVWJjSmuPw76Efg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    function fsolRenderMath() {
+      if (typeof renderMathInElement !== "function") return;
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    }
+    window.addEventListener("load", fsolRenderMath);
+    document.addEventListener("DOMContentLoaded", fsolRenderMath);
+  </script>
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    sup.citation-ref {
+      line-height: 0;
+      font-size: 0.75em;
+    }
+
+    sup.citation-ref a {
+      color: #a31f34;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0 1px;
+      transition: color 0.15s ease;
+    }
+
+    sup.citation-ref a:hover {
+      text-decoration: underline;
+      color: #111;
+    }
+
+    .references-list {
+      padding-left: 1.25rem;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: #444;
+      margin-bottom: 2.5rem;
+    }
+
+    .references-list li {
+      margin-bottom: 0.85rem;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+
+    .references-list li:target {
+      background-color: #fcf8e3;
+      outline: 1px solid #f0e6b8;
+    }
+
+    .references-list .ref-text {
+      color: #222;
+    }
+
+    .references-list em {
+      font-style: italic;
+    }
+
+    .references-list .ref-link {
+      margin-left: 0.35rem;
+      font-size: 0.85rem;
+      color: #a31f34;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .references-list .ref-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== Header: white bar, red bottom line. MIT logo only. ===== -->
+  <header class="site-header">
+    <div class="bar">
+      <div class="brand">
+        <a href="../../index.html" aria-label="主页">
+          <span class="logo-mask">
+            <img src="../../image/mit-logo.png" alt="麻省理工学院校徽">
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrapper post" id="top">
+
+    <a class="post-back" href="../../index.html">&larr; 返回主页</a>
+
+    <article>
+      <nav class="lang-switch" aria-label="语言">
+        <a href="online-learning-from-experience.zh.html" aria-current="page">中文版</a>
+        <a href="online-learning-from-experience.html" lang="en" hreflang="en">English Version</a>
+      </nav>
+
+      <h1 class="post-title">在部署经验上在线训练Agents究竟该怎么做？</h1>
+      <p class="post-authors">
+        <span class="author-me">Huaibo Chen</span><sup>1</sup>,
+        Maohao Shen<sup>1</sup>,
+        Siru Ouyang<sup>2</sup>,
+        Dylan Zhang<sup>2</sup>,
+        Zexue He<sup>3</sup>,
+        Yingheng Wang<sup>4</sup>,
+        Xiaotong Zhang<sup>5</sup>,
+        Inkit Padhi<sup>5</sup>,
+        Subhajit Chaudhury<sup>5</sup>,
+        Gregory W. Wornell<sup>1</sup>,
+        Prasanna Sattigeri<sup>5</sup>,
+        Zhang-Wei Hong<sup>1</sup>,
+        Kamal Youcef-Toumi<sup>1</sup>
+      </p>
+      <div class="post-affil">
+        <ol>
+          <li><sup>1</sup>MIT</li>
+          <li><sup>2</sup>UIUC</li>
+          <li><sup>3</sup>Stanford University</li>
+          <li><sup>4</sup>Cornell University</li>
+          <li><sup>5</sup>MIT-IBM Computing Research Lab</li>
+        </ol>
+      </div>
+      <p class="post-venue">
+        2026 年 10 月
+      </p>
+
+      <p class="post-lede">
+        最近，越来越多的研究开始讨论 LLM Agent 在部署之后，如何继续从自身的交互经验中学习。例如，当一个
+        Web Agent 在网上有过几次购物的尝试以后，这些经验可以被利用起来，后面再进行购物的时候就可以避免之前犯过的错误，提高成功率。这一研究方向通常被称为
+        test-time learning 或 learning from experience，也算是一种 self-evolving agents。
+      </p>
+
+      <p>
+        今年三月的时候，test-time learning 的主流方法还是 memory，就是将过去的经验存储在一个 memory module
+        中，然后回答每个 query 的时候检索类似的 memory
+        放在 context 里<sup class="citation-ref">[<a href="#ref-1">1</a>,<a href="#ref-2">2</a>,<a href="#ref-3">3</a>]</sup>。我们当时就在思考：能不能用训模型的方式（即更新模型参数）来从部署经验中学习？这就是当前这个项目的初衷。在做的过程中，已经也陆续出现了一些用训模型的方式来进行
+        test-time learning 的文章<sup class="citation-ref">[<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>。不过，我们总是隐隐觉得这些方法缺少了关键的一环。
+      </p>
+
+      <p>
+        这些文章是怎么展示学习效果的呢？就是横轴画步数，纵轴画精度，如果精度稳步提升，那就说明经验被训进模型里了<sup class="citation-ref">[<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>。假如通过这样的方式评估
+        test-time learning，这和后训练又有什么区别呢？后训练也是随着步数增加，精度提高。我们逐渐意识到，仅仅证明“精度有提升”，其实并没有抓住
+        test-time learning 的本质。于是我们就按照我们的理解做了一些工作，提出了
+        <a href="https://openreview.net/pdf?id=ZsATUr0EZ0" target="_blank" rel="noopener"><strong>Fast
+        and Slow Online Learning（FSOL）</strong></a>，年底会在 NeurIPS 2026 的 TTCL Workshop /
+        LCFM Workshop present（论文原文称之为Fast and Slow Reinforcement Learning, FSRL）。在这个文章中，我们主要想传递三个方面的观点。
+      </p>
+
+      <h2>一、Test-time learning 的评估应该基于 cumulative performance</h2>
+
+      <p>
+        Post-training 一般是有一个固定的训练集，然后使用 SFT 或 RL 对模型进行训练，最终在测试集上评估最后的
+        checkpoint。在训练过程中，模型可能会经历许多个 checkpoints，但我们真正关心的通常只是最后一个。在这种情况下，即使中间某些
+        checkpoints 的表现很差，其实也没有太大关系。
+      </p>
+
+      <p>
+        然而，test-time learning 完全不同。如图 1 所示，假设一个 Agent 已经正式上线。第一批 queries 到达后，Agent
+        给出回答、收到反馈，并根据反馈更新参数；随后第二批 queries
+        到达，由刚刚更新后的模型进行回答，再获得反馈、再次更新。这个过程不断重复。这意味着，每一个中间 checkpoint
+        都会立即被用于处理后续的真实 query，而每一次 interaction 都直接面向用户。因此，中间 checkpoint
+        的表现同样非常重要。每一次 interaction 的对错（或质量）都应该计入最终的评估。
+      </p>
+
+      <figure class="post-figure">
+        <img src="Fig1.png" alt="在线学习示意图：每个 checkpoint 服务用户并根据反馈更新，每一次交互都计入 cumulative performance。">
+        <figcaption>
+          <strong>图 1.</strong> 部署中的在线学习。每个 checkpoint 都在服务真实用户、接收反馈，并被更新为下一个
+          checkpoint&mdash;&mdash;因此每个 checkpoint 的每一次交互，而不只是最后那个，都计入 cumulative performance。
+        </figcaption>
+      </figure>
+
+      <p>
+        这也意味着，如果一个 online learner
+        最终确实能够达到很高的精度，但代价是它在学习过程中犯了很多次错误，那么这些错误全部都会被用户感知到，从而大大影响用户满意度。因此，我们真正应该优化的，并不是最终性能，而是<strong>整个
+        interaction stream 上的 cumulative performance</strong>。这与机器学习的经典方向在线学习（Online
+        Learning）是一样的范式<sup class="citation-ref">[<a href="#ref-7">7</a>]</sup>：数据是流式到达的，且评估是在整个 data stream 上面。所以后面我们也用在线学习来代指从部署经验中学习这种范式。
+      </p>
+
+      <p>
+        我们假定 reward 是二元的（0或1），那么截至第 \(N\) 次交互时的总体精度可以写为：
+      </p>
+
+      <p class="post-eq">
+        $$\mathrm{Acc}(N)=\frac{1}{N}\sum_{i=1}^{N} r_i$$
+      </p>
+
+      <p>
+        或者，等价地，我们也可以使用online learning 里面的经典指标 cumulative regret<sup class="citation-ref">[<a href="#ref-7">7</a>]</sup> 来进行评估：
+      </p>
+
+      <p class="post-eq">
+        $$\mathrm{Regret}(N)=\sum_{i=1}^{N}\left(1-r_i\right)$$
+      </p>
+
+      <p>
+        这里我们设用于和learner比较的oracle policy是每个query都能成功的理想policy。直观来说，这个指标实际上是在问从部署开始到现在，我们一共犯了多少错误。
+      </p>
+
+      <p>
+        这个视角实际上也会改变我们对 learning curve 的理解。图2所示的是两个算法 A 和 B的精度随用于训练的query数量的变化。它们最终达到了相同的精度，所以如果把它们看作
+        offline learner，区别不大。但如果把它们看作 online learner，显然 Algorithm B
+        在最终“学会”之前有很长一段时间停留在低精度，犯了更多错误，为学习付出了更高的失败代价。因此，对于 online learner 来说，我们真正关心的，是
+        accuracy&ndash;num of queries 曲线下面积（这一积分正比于总体精度），或者是曲线与y=1夹成的面积（等于 cumulative
+        regret），而不仅仅是最终那个 checkpoint 的 accuracy。
+      </p>
+
+      <figure class="post-figure">
+        <img src="Fig2.png" alt="两条最终精度相同的学习曲线：Algorithm A 上升很快，Algorithm B 上升很慢，因此 A 的曲线下面积大得多。">
+        <figcaption>
+          <strong>图 2.</strong> 最终精度相同的两个算法，作为 online learner 并不等价。Algorithm A 上升快、Algorithm
+          B 上升慢，所以 A 的 accuracy&ndash;queries 曲线下面积大得多&mdash;&mdash;等价地说，cumulative regret 小得多。
+        </figcaption>
+      </figure>
+
+      <h2>二、Cumulative objective 可以得到“学得好”和“学得快”两个要求，基于此我们提出了 FSOL</h2>
+
+      <p>
+        从 cumulative performance
+        出发，一个非常自然的分解就出现了：一方面，最终收敛的模型表现要足够好；另一方面，达到这一表现要足够快，也就是样本效率要高。只有这样才能最大化
+        accuracy&ndash;num of queries 曲线下面积。
+      </p>
+
+      <p>
+        我们现有的两类方法，只能满足其中一个。第一类是 <strong>memory</strong><sup class="citation-ref">[<a href="#ref-1">1</a>,<a href="#ref-2">2</a>,<a href="#ref-3">3</a>]</sup>，把过去的成功经验存下来，那么下次碰到类似任务时，检索到的经验可以立马放在 context 里作为 few-shot examples，不需要大量数据来确保梯度更新稳定。所以 memory
+        最大的优势就是 fast adaptation。但 memory 也有明显的问题：受模型本身 in-context learning
+        能力的限制<sup class="citation-ref">[<a href="#ref-8">8</a>,<a href="#ref-9">9</a>,<a href="#ref-10">10</a>]</sup>。如果你想改变的是更深层次的 behavior，比如更长的 reasoning、更可靠的 tool-use strategy，单纯往 context
+        里塞经验提升有限。所以 memory 的特点是：起步很快，但 ceiling 不够高。
+      </p>
+
+      <p>
+        另一条路线就是 <strong>RL</strong>，也就是直接更新 model weights。RL
+        最大的优势在于，更新模型参数往往能让回复的 pattern 有根本性变化，有更高的 ceiling performance。但 RL
+        有另外一个非常现实的问题：它学得慢。没有几千个样本基本不可能实现精度上涨。这个问题在 online setting 下还受到 single-rollout
+        的限制：传统 RL training，比如 GRPO，可以对一个 prompt rollout 8 次来构建 group；但真实用户 query 一般只有一个
+        feedback<sup class="citation-ref">[<a href="#ref-6">6</a>,<a href="#ref-11">11</a>]</sup>。一个购物 Agent 不可能下 8 次单，因为这会有额外花费；一个聊天模型也不能生成 8 个回答，要求用户分给 8
+        个不同回答打分。所以 online setting 下的 RL 必须是 single rollout per query（BTW，很多基于训练的方式来做 online
+        learning 的 work 没有遵循这一限制）。这样的话你想要多少 rollout，就得消耗多少用户的 query，从 query
+        角度讲的样本效率很差。RL 就很容易出现这样的 learning curve：前面看不到提升，中间开始慢慢变好，最后性能超过 memory。如果你只看
+        final checkpoint，这当然没有问题；但如果优化的是 cumulative performance，那么早期每一次失败都由用户承受。
+      </p>
+
+      <p>
+        受到 RL community 经典之作 Neural Episodic Control（NEC）<sup class="citation-ref">[<a href="#ref-12">12</a>,<a href="#ref-13">13</a>]</sup>的启发，我们认为把 memory（对应 NEC 里的 episodic
+        memory）和 RL 结合刚好可以实现又快又好，于是就有了 Fast and Slow Online Learning，FSOL。核心结构就是：<strong>Memory
+        负责 fast，RL 负责 slow。</strong>其流程如图 3 所示。Memory 让刚刚获得的 successful experience 可以马上影响下一个
+        interaction；RL 则把 interaction experience 慢慢 internalize 到 model weights 里。
+      </p>
+
+      <figure class="post-figure">
+        <img src="Fig3.png" alt="FSOL 流程图：对 task stream 的每个 batch，先检索 memory，由 memory 引导 rollout，把 trajectory 合并回 memory bank，再做 RL 更新得到下一个 agent。">
+        <figcaption>
+          <strong>图 3.</strong> FSOL 的流程。对 task stream 中的一个 batch，先对每个query做：(1) 从 memory bank 检索，(2) 在检索到的
+          memory 引导下 rollout，(3) 把得到的 trajectory 合并回 memory。当batch内所有query都处理完以后，(4) 做一次 RL 更新，用新的policy去rollout下一个batch。
+        </figcaption>
+      </figure>
+
+      <p>
+        而且二者不只是“两条曲线取长补短”，而是二者结合更像一种 synergy。在训练初期，纯 RL policy 可能很弱，成功率低，那么大部分
+        rollout 都是低质量甚至失败的，RL 得到的 positive learning signal 也很 sparse。一旦加入 memory，过去的成功经验能够立刻被
+        retrieve，于是 rollout quality 会提高，探索更容易进入高 reward 区域。反过来也一样，随着 RL policy 逐渐变强，它自己产生的
+        successful trajectory 会越来越多、质量越来越高，而这些新的 successful experience 又会进入 memory。
+      </p>
+
+      <p>
+        更重要的是，FSOL 并不是某一个特定的算法，而是一个通用的 RL + memory 框架。实验里 RL 我们用了 PPO<sup class="citation-ref">[<a href="#ref-14">14</a>]</sup> 和
+        REINFORCE++<sup class="citation-ref">[<a href="#ref-15">15</a>]</sup>（因为需要遵守single-rollout这个限制）；Memory 我们用了原轨迹（即 action sequence）和 Agent Workflow
+        Memory（AWM）<sup class="citation-ref">[<a href="#ref-2">2</a>]</sup>。实验结果显示，对不同 memory 形式和 RL 算法，FSOL 都能够超过只用其中一个成分的表现，这说明 FSOL
+        的收益并不依赖某个特定的 memory 形式或 RL 算法。
+        
+        我们在 Writing Preference<sup class="citation-ref">[<a href="#ref-16">16</a>,<a href="#ref-11">11</a>]</sup>、WebShop<sup class="citation-ref">[<a href="#ref-17">17</a>]</sup>、ALFWorld<sup class="citation-ref">[<a href="#ref-18">18</a>]</sup>、Search-augmented
+        QA<sup class="citation-ref">[<a href="#ref-19">19</a>,<a href="#ref-20">20</a>]</sup> 四个 benchmarks 上测试了FSOL（如表 1）。对每一个benchmark，我们把训练集的数据构成一个data stream，然后用四个随机种子进行shuffle，让learner在stream上面从头至尾、无重叠地access每个query。
+        可以看出，FSOL在四个benchmark上都比只用memory或RL的表现要好，说明FSOL的收益并不依赖某个特定的memory形式或RL算法。唯一的例外是 AWM 和 PPO 的组合，因为 AWM 在 WebShop 上面本身就不太 work。
+      </p>
+
+      <div class="table-wrap">
+        <table class="post-table">
+          <caption>
+            <strong>表 1.</strong> 四个 benchmarks 上的总体精度。短横线表示不支持的设置，因为写作任务不存在workflow故无法使用AWM。
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">Memory</th>
+              <th scope="col">WebShop</th>
+              <th scope="col">Search</th>
+              <th scope="col">ALFWorld</th>
+              <th scope="col">Writing</th>
+              <th scope="col">Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="rowgroup" class="cat-cell">Zero-shot</th>
+              <td>Zero-shot</td>
+              <td>4.0 &plusmn; 0.2</td>
+              <td>15.0 &plusmn; 0.0</td>
+              <td>13.0 &plusmn; 0.1</td>
+              <td>17.9 &plusmn; 0.3</td>
+              <td>12.5</td>
+            </tr>
+            <tr class="group-start">
+              <th scope="rowgroup" rowspan="2" class="cat-cell">Memory</th>
+              <td>Raw Memory</td>
+              <td>34.0 &plusmn; 1.0</td>
+              <td>33.8 &plusmn; 0.2</td>
+              <td>25.0 &plusmn; 0.5</td>
+              <td>68.7 &plusmn; 1.9</td>
+              <td>40.4</td>
+            </tr>
+            <tr>
+              <td>AWM</td>
+              <td>6.1 &plusmn; 0.7</td>
+              <td>33.8 &plusmn; 0.2</td>
+              <td>20.3 &plusmn; 0.6</td>
+              <td>&ndash;</td>
+              <td>&ndash;</td>
+            </tr>
+            <tr class="group-start">
+              <th scope="rowgroup" rowspan="2" class="cat-cell">RL</th>
+              <td>REINFORCE++</td>
+              <td>38.4 &plusmn; 5.6</td>
+              <td>35.8 &plusmn; 1.9</td>
+              <td>33.7 &plusmn; 3.8</td>
+              <td>79.8 &plusmn; 0.4</td>
+              <td>46.9</td>
+            </tr>
+            <tr>
+              <td>PPO</td>
+              <td>47.7 &plusmn; 2.7</td>
+              <td>35.1 &plusmn; 0.6</td>
+              <td>40.6 &plusmn; 3.9</td>
+              <td>49.7 &plusmn; 4.8</td>
+              <td>43.3</td>
+            </tr>
+            <tr class="row-ours group-start">
+              <th scope="rowgroup" rowspan="3" class="cat-cell">FSOL (Ours)</th>
+              <td>PPO + AWM</td>
+              <td>46.7 &plusmn; 2.9</td>
+              <td>37.8 &plusmn; 0.2</td>
+              <td>48.8 &plusmn; 3.0</td>
+              <td>&ndash;</td>
+              <td>&ndash;</td>
+            </tr>
+            <tr class="row-ours">
+              <td>PPO + Raw</td>
+              <td><strong>56.3 &plusmn; 0.9</strong></td>
+              <td>37.5 &plusmn; 0.6</td>
+              <td>50.9 &plusmn; 3.2</td>
+              <td>96.3 &plusmn; 0.5</td>
+              <td><strong>60.2</strong></td>
+            </tr>
+            <tr class="row-ours">
+              <td>REINFORCE++ + Raw</td>
+              <td>52.5 &plusmn; 1.5</td>
+              <td><strong>38.8 &plusmn; 0.9</strong></td>
+              <td><strong>52.1 &plusmn; 2.4</strong></td>
+              <td><strong>97.4 &plusmn; 0.3</strong></td>
+              <td><strong>60.2</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        这里我们可以拿 Writing 作为例子来看一下学习的动态过程，如图 4 所示。这个任务让 LLM
+        从一个开头续写，要求从三种给定风格中选一种。模型不知道哪种风格会被奖励，由 judge model
+        判断写作是否符合给定的风格。这里的 memory 就是之前被判定为符合给定风格的 response，RL 算法是 REINFORCE++。对于
+        memory，很明显的特征就是速度非常快，但是很快就饱和了。RL 起步很慢，但是最终的精度是可以超过 memory 的。而 FSOL 开头基本贴合了
+        memory 的曲线，起步很快，而且可以超过 memory 的精度平台进一步上升，直到接近 100% 精度。很明显 FSOL
+        曲线下方的面积是最大的，cumulative performance 最好。
+      </p>
+
+      <figure class="post-figure figure-two-thirds">
+        <img src="Fig4.png" alt="Writing 任务上 running accuracy 随 query 数的变化：memory 上升快但在 0.7 附近饱和，RL 起步慢但最终超过 memory，FSOL 起步与 memory 一样快并持续上升接近 1.0。">
+        <figcaption>
+          <strong>图 4.</strong> Writing Preference 上的学习动态。Memory 适应很快但在 0.7 附近饱和；RL 起步慢，最终超过
+          memory；FSOL 既有 memory 一样快的起步，又能继续上升接近 1.0，曲线下面积最大。此处RL算法为REINFORCE++，memory为raw memory。
+        </figcaption>
+      </figure>
+
+      <h2>三、评测 Online Learning 不止要看 IID stream</h2>
+
+      <p>
+        还有一个我们认为经常被低估的问题：interaction stream 应该长什么样？最简单的实验当然是像表1的实验设置一样，准备一堆 queries，shuffle
+        一下，然后让 Agent 一边做一边学。当前的work大部分也都是这么做的<sup class="citation-ref">[<a href="#ref-4">2</a>,<a href="#ref-4">3</a>,<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>。但如果想贴近真实部署的条件，那么只做
+        stationary IID stream 是远远不够的。真实世界里，stream
+        本身就是会变化的。有可能我今天对某种写作风格有偏好，但一周以后就变了，聪明的 agent
+        应该去 track 用户偏好的变化。也可能我每天的任务掺杂了写作、代码、数学，都是完全不同的任务类型。也可能我之前一直集中于写代码，最近用这个模型做了很多
+        web shopping，但现在又回到了代码，我希望他能记住之前学到的代码的技能，而不是又要从头学。基于实际部署的种种情况，我们不仅测试
+        stationary stream，还专门构造了 distribution shift、mixed-task stream 和 sequential-task stream。
+      </p>
+
+      <h3>Distribution shift</h3>
+
+      <p>
+        首先是 distribution shift。这里我们设置了三种不同的 shift 来源：reward rules、环境，和 query
+        distributions。比如 Writing task 里，系统一开始偏好一种写作风格，之后偏好另一种，再之后又变成第三种，昨天的正确行为，今天可能已经变成错误行为。再比如
+        WebShop，一开始的购买流程可能是 product page &rarr; Buy Now，后来网站改版变成 product page &rarr; Add to Cart
+        &rarr; Checkout。这里用户 query 没变，reward definition 也没本质变化，变的是 environment dynamics。还有
+        ALFWorld，我们则构造了 query distribution shift，让前半段和后半段来自不同 task subsets。论文中的
+        distribution-shift 实验正好覆盖了 reward rule、environment dynamics 和 query distribution 三种变化。
+      </p>
+
+      <p>
+        这些 setting 为什么重要？因为一旦 shift 发生，学习速度重新变得重要。假设你的 RL 已经花了 3000 个 query
+        学会旧 environment，突然网站改版，如果你又需要 3000 个 query 才重新学会，那么这过程中用户收到的全是错误的回答。每次一改版，agent就又要花3000个query重新学一遍，完全是在挑战用户的耐心。这也是 learn
+        fast 变得非常重要的地方。结果如图 5 所示，可以看到，在三种不同的 shift 条件下，FSOL 都是 recover
+        最快、精度一直领先其他方法的。
+      </p>
+
+      <figure class="post-figure figure-wide">
+        <img src="Fig5.png" alt="三种 distribution shift 下的 running accuracy：Writing 的 reward rule shift、WebShop 的环境变化、ALFWorld 的 query distribution shift，FSOL 在每条虚线后都恢复最快。">
+        <figcaption>
+          <strong>图 5.</strong> 三种来源的 distribution shift。左：Writing 上的 reward rule shift（被奖励的风格变化两次）。中：WebShop
+          上的 environment dynamics shift（结账流程改版）。右：ALFWorld 上的 query distribution shift（前后两段来自不同
+          task subsets）。虚线标出 shift 发生的位置；三种情况下 FSOL 都 recover 最快并保持领先。此处RL算法为REINFORCE++，memory为raw memory。
+        </figcaption>
+      </figure>
+
+      <h3>Mixed tasks</h3>
+
+      <p>
+        其次是 mixed tasks。我们实验里直接把 Writing 和 WebShop interleave 到同一个 stream 里，由 Writing 和 WebShop
+        混合，FSOL 在两个任务上都比单独的 memory 和 RL 维持了更高的 running accuracy，如图 6 所示。
+      </p>
+
+      <figure class="post-figure figure-wide">
+        <img src="Fig6_mix.png" alt="Writing 和 WebShop 交替混合的 stream 上，按任务分别统计的 running accuracy；FSOL 在两个面板上都领先 memory、RL 和 zero-shot。">
+        <figcaption>
+          <strong>图 6.</strong> 把 Writing 和 WebShop interleave 到同一个 stream，并按任务分别统计 running
+          accuracy。左：Writing。右：WebShop。FSOL 在两个任务上都高于只用 memory 和只用 RL。此处RL算法为PPO，memory为raw memory。
+        </figcaption>
+      </figure>
+
+      <h3>Sequential tasks</h3>
+
+      <p>
+        最后是 sequential tasks，也就是 <em>A</em> &rarr; <em>B</em> &rarr; <em>A</em>。比如我们的实验里是 Writing
+        &rarr; WebShop &rarr; Writing。这个 setting 问的是 continual learning 里两个很经典的问题：第一，学完 A
+        以后还能不能学 B，也就是 plasticity；第二，学完 B 以后，再回到 A，还记不记得原来的能力，也就是
+        retention。我们的实验就是为了检验从 Writing 迁移到 WebShop 时的 plasticity，以及回到 Writing
+        后之前学到的能力是否仍被保留。结果如图 7 所示。这里可以看到，memory、RL 和 FSOL 都做到了：在学习 WebShop 的时候，直接从
+        base model 开始（中间图的虚线）和先学 Writing 再学 WebShop（中间图的实线）进度很接近，有足够的
+        plasticity；在第三个阶段的时候，三种方法的精度也都围绕着第一阶段末尾的精度上下波动，没有把之前学的能力忘掉。
+      </p>
+
+      <figure class="post-figure figure-wide">
+        <img src="Fig7_sequential.png" alt="Writing → WebShop → Writing 三阶段实验：第二阶段 after Writing 的实线与 from Base 的虚线接近，第三阶段三种方法都回到第一阶段末尾的精度水平。">
+        <figcaption>
+          <strong>图 7.</strong> Sequential tasks：Writing &rarr; WebShop &rarr; Writing。第二阶段对比先学
+          Writing 再学 WebShop（实线）与直接从 base model 学 WebShop（虚线）&mdash;&mdash;两者接近说明 plasticity
+          得到保留。第三阶段三种方法都回到各自第一阶段的精度水平，说明之前学到的能力没有被遗忘。此处RL算法为REINFORCE++，memory为raw memory。
+        </figcaption>
+      </figure>
+
+      <h2>最后</h2>
+
+      <p>
+        总结一下，我们想传递的三个 messages。
+      </p>
+
+      <p>
+        <strong>第一</strong>，online agent learning
+        不应该只问“最后模型有没有变强”，而应该问：在它不断服务用户、不断学习的整个过程中，总共表现得怎么样？因此目标应该从 final
+        performance 变成 cumulative performance。
+      </p>
+
+      <p>
+        <strong>第二</strong>，一旦优化 cumulative performance，就必须同时解决 learn fast + learn well。Memory
+        提供 fast non-parametric adaptation，RL 提供 slower but stronger parametric adaptation，而 FSOL
+        就是结合了这两种时间尺度，实现最大化 cumulative performance。
+      </p>
+
+      <p>
+        <strong>第三</strong>，online learning 不应该只在 IID stream 上测试。真实 deployment 里，可能有 distribution
+        shift，任务还可能混合不同类型、以及某类型的任务可能消失后再出现。所以一个完整的 online agent evaluation
+        至少应该逐渐覆盖 stationary、distribution shift、mixed tasks 和 sequential tasks。我们的评测结果也显示 FSOL
+        在这些设定下表现都强于只使用 memory 或 RL。
+      </p>
+    </p>
+    更多细节请见论文：
+        <a href="https://openreview.net/pdf?id=ZsATUr0EZ0" target="_blank" rel="noopener">Agent Online Learning Beyond Memory</a>。
+        欢迎批评指正！ <a href="mailto:hbchen@mit.edu">hbchen [AT] mit.edu</a>。
+    </p>
+      <h2>引用</h2>
+
+      <div class="cite-block">
+        <div class="cite-head">
+          <span>BibTeX</span>
+          <button class="cite-copy" type="button" data-copy-target="bibtex">复制</button>
+        </div>
+        <pre id="bibtex"><code>@inproceedings{
+          chen2026agent,
+          title={Agent Online Learning Beyond Memory},
+          author={Huaibo Chen and Maohao Shen and Siru Ouyang and Dylan Zhang and Zexue He and Yingheng Wang and Xiaotong Zhang and Inkit Padhi and Subhajit Chaudhury and Gregory W. Wornell and Prasanna Sattigeri and Zhang-Wei Hong and KAMAL YOUCEF-TOUMI},
+          booktitle={NeurIPS 2026 Workshop on Towards Test-Time Continual Learning Agents},
+          year={2026},
+          url={https://openreview.net/forum?id=LtrVQShaq7}
+          }</code></pre>
+      </div>
+
+      <h2>参考文献</h2>
+
+      <ol class="references-list">
+        <li id="ref-1">
+          <span class="ref-text">
+            Longtao Zheng, Rundong Wang, Xinrun Wang, and Bo An.
+            <em>Synapse: Trajectory-as-exemplar prompting with memory for computer control</em>.
+            In <em>International Conference on Learning Representations (ICLR)</em>, 2024.
+          </span>
+        </li>
+
+        <li id="ref-2">
+          <span class="ref-text">
+            Zora Zhiruo Wang, Jiayuan Mao, Daniel Fried, and Graham Neubig.
+            <em>Agent Workflow Memory</em>.
+            In <em>Proceedings of the 42nd International Conference on Machine Learning (ICML)</em>, 2025.
+          </span>
+        </li>
+
+        <li id="ref-3">
+          <span class="ref-text">
+            Siru Ouyang, Jun Yan, I-Hung Hsu, Yanfei Chen, Ke Jiang, Zifeng Wang, Rujun Han, Long Le, Samira Daruki, Xiangru Tang, Vishy Tirumalashetty, George Lee, Mahsan Rofouei, Hangfei Lin, Jiawei Han, Chen-Yu Lee, and Tomas Pfister.
+            <em>ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory</em>.
+            In <em>The Fourteenth International Conference on Learning Representations (ICLR)</em>, 2026.
+          </span>
+        </li>
+
+        <li id="ref-4">
+          <span class="ref-text">
+            Yinjie Wang, Xuyang Chen, Xiaolong Jin, Mengdi Wang, and Ling Yang.
+            <em>OpenClaw-RL: Train Any Agent Simply by Talking</em>.
+            arXiv preprint arXiv:2603.10165, 2026.
+          </span>
+        </li>
+
+        <li id="ref-5">
+          <span class="ref-text">
+            Tianzhu Ye, Li Dong, Qingxiu Dong, Xun Wu, Shaohan Huang, and Furu Wei.
+            <em>Online experiential learning for language models</em>.
+            arXiv preprint arXiv:2603.16856, 2026.
+          </span>
+        </li>
+
+        <li id="ref-6">
+          <span class="ref-text">
+            Linbo Liu, Yuzhe Lu, Youzhi Luo, Sijun Tan, Panpan Xu, and Luke Huan.
+            <em>Continual Learning via Real-Time RL for Agents</em>.
+            <em>rLLM Blog</em>, 2026.
+          </span>
+        </li>
+
+        <li id="ref-7">
+          <span class="ref-text">
+            Elad Hazan.
+            <em>Introduction to online convex optimization</em>.
+            <em>Foundations and Trends in Optimization</em>, 2(3-4):157&ndash;325, 2016.
+          </span>
+        </li>
+
+        <li id="ref-8">
+          <span class="ref-text">
+            Ekin Aky&uuml;rek, Mehul Damani, Adam Zweiger, Linlu Qiu, Han Guo, Jyothish Pari, Yoon Kim, and Jacob Andreas.
+            <em>The Surprising Effectiveness of Test-Time Training for Few-Shot Learning</em>.
+            In <em>Forty-second International Conference on Machine Learning (ICML)</em>, 2025.
+          </span>
+        </li>
+
+        <li id="ref-9">
+          <span class="ref-text">
+            Pengrui Han, Peiyang Song, Haofei Yu, and Jiaxuan You.
+            <em>In-context learning may not elicit trustworthy reasoning: A-not-b errors in pretrained language models</em>.
+            In <em>Findings of the Association for Computational Linguistics: EMNLP 2024</em>, pages 5624&ndash;5643, 2024.
+          </span>
+        </li>
+
+        <li id="ref-10">
+          <span class="ref-text">
+            Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou, et al.
+            <em>Chain-of-thought prompting elicits reasoning in large language models</em>.
+            <em>Advances in Neural Information Processing Systems (NeurIPS)</em>, 35:24824&ndash;24837, 2022.
+          </span>
+        </li>
+
+        <li id="ref-11">
+          <span class="ref-text">
+            Zhenyu Hou, Yujiang Li, Jie Tang, and Yuxiao Dong.
+            <em>Single-Rollout Asynchronous Optimization for Agentic Reinforcement Learning</em>.
+            arXiv preprint arXiv:2607.07508, 2026.
+          </span>
+        </li>
+
+        <li id="ref-12">
+          <span class="ref-text">
+            Alexander Pritzel, Benigno Uria, Sriram Srinivasan, Adria Puigdomenech Badia, Oriol Vinyals, Demis Hassabis, Daan Wierstra, and Charles Blundell.
+            <em>Neural episodic control</em>.
+            In <em>International Conference on Machine Learning (ICML)</em>, pages 2827&ndash;2836, 2017.
+          </span>
+        </li>
+
+        <li id="ref-13">
+          <span class="ref-text">
+            Matthew Botvinick, Sam Ritter, Jane X Wang, Zeb Kurth-Nelson, Charles Blundell, and Demis Hassabis.
+            <em>Reinforcement learning, fast and slow</em>.
+            <em>Trends in Cognitive Sciences</em>, 23(5):408&ndash;422, 2019.
+          </span>
+        </li>
+
+        <li id="ref-14">
+          <span class="ref-text">
+            John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
+            <em>Proximal policy optimization algorithms</em>.
+            arXiv preprint arXiv:1707.06347, 2017.
+          </span>
+        </li>
+
+        <li id="ref-15">
+          <span class="ref-text">
+            Jian Hu, Jason Klein Liu, Haotian Xu, and Wei Shen.
+            <em>REINFORCE++: Stabilizing critic-free policy optimization with global normalization</em>.
+            arXiv preprint arXiv:2501.03262, 2025.
+          </span>
+        </li>
+
+        <li id="ref-16">
+          <span class="ref-text">
+            Angela Fan, Mike Lewis, and Yann Dauphin.
+            <em>Hierarchical neural story generation</em>.
+            In <em>Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (ACL)</em>, pages 889&ndash;898, 2018.
+          </span>
+        </li>
+
+        <li id="ref-17">
+          <span class="ref-text">
+            Shunyu Yao, Howard Chen, John Yang, and Karthik Narasimhan.
+            <em>Webshop: Towards scalable real-world web interaction with grounded language agents</em>.
+            <em>Advances in Neural Information Processing Systems (NeurIPS)</em>, 35:20744&ndash;20757, 2022.
+          </span>
+        </li>
+
+        <li id="ref-18">
+          <span class="ref-text">
+            Mohit Shridhar, Xingdi Yuan, Marc-Alexandre C&ocirc;t&eacute;, Yonatan Bisk, Adam Trischler, and Matthew Hausknecht.
+            <em>ALFWorld: Aligning Text and Embodied Environments for Interactive Learning</em>.
+            arXiv preprint arXiv:2010.03768, 2021.
+          </span>
+        </li>
+
+        <li id="ref-19">
+          <span class="ref-text">
+            Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William Cohen, Ruslan Salakhutdinov, and Christopher D Manning.
+            <em>HotpotQA: A dataset for diverse, explainable multi-hop question answering</em>.
+            In <em>Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing (EMNLP)</em>, pages 2369&ndash;2380, 2018.
+          </span>
+        </li>
+
+        <li id="ref-20">
+          <span class="ref-text">
+            Tom Kwiatkowski, Jennimaria Palomaki, Olivia Redfield, Michael Collins, Ankur Parikh, Chris Alberti, Danielle Epstein, Illia Polosukhin, Jacob Devlin, Kenton Lee, et al.
+            <em>Natural questions: a benchmark for question answering research</em>.
+            <em>Transactions of the Association for Computational Linguistics (TACL)</em>, 7:453&ndash;466, 2019.
+          </span>
+        </li>
+      </ol>
+    </article>
+
+  </main>
+
+  <footer>
+    <div class="wrapper">
+      &copy; 2026 Huaibo Chen &middot; <a href="../../index.html">主页</a>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.cite-copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var el = document.getElementById(btn.dataset.copyTarget);
+        if (!el) return;
+        var text = el.innerText;
+        var done = function () {
+          var old = btn.textContent;
+          btn.textContent = '已复制';
+          setTimeout(function () { btn.textContent = old; }, 1600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+        } else {
+          fallback(text, done);
+        }
+        function fallback(t, cb) {
+          var ta = document.createElement('textarea');
+          ta.value = t;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'absolute';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); cb(); } catch (e) { /* no-op */ }
+          document.body.removeChild(ta);
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

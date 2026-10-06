@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="../../styles.css">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How Should Agents Train Online from Deployment Experience? &middot; Huaibo Chen</title>
+  <link rel="icon" type="image/png" href="../../image/mit-logo.png" sizes="32x32">
+  <link rel="shortcut icon" type="image/png" href="../../image/mit-logo.png">
+  <link rel="alternate" hreflang="en" href="online-learning-from-experience.html">
+  <link rel="alternate" hreflang="zh-Hans" href="online-learning-from-experience.zh.html">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"
+    integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"
+    integrity="sha512-LQNxIMR5rXv7o+b1l8+N1EZMfhG7iFZ9HhnbJkTp4zjNr5Wvst75AqUeFDxeRUa7l5vEDyUiAip//r+EFLLCyA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+    integrity="sha512-iWiuBS5nt6r60fCz26Nd0Zqe0nbk1ZTIQbl3Kv7kYsX+yKMUFHzjaH2+AnM6vp2Xs+gNmaBAVWJjSmuPw76Efg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    function fsolRenderMath() {
+      if (typeof renderMathInElement !== "function") return;
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "\\(", right: "\\)", display: false }
+        ],
+        throwOnError: false
+      });
+    }
+    window.addEventListener("load", fsolRenderMath);
+    document.addEventListener("DOMContentLoaded", fsolRenderMath);
+  </script>
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    sup.citation-ref {
+      line-height: 0;
+      font-size: 0.75em;
+    }
+
+    sup.citation-ref a {
+      color: #a31f34;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0 1px;
+      transition: color 0.15s ease;
+    }
+
+    sup.citation-ref a:hover {
+      text-decoration: underline;
+      color: #111;
+    }
+
+    .references-list {
+      padding-left: 1.25rem;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: #444;
+      margin-bottom: 2.5rem;
+    }
+
+    .references-list li {
+      margin-bottom: 0.85rem;
+      padding: 4px 6px;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+    }
+
+    .references-list li:target {
+      background-color: #fcf8e3;
+      outline: 1px solid #f0e6b8;
+    }
+
+    .references-list .ref-text {
+      color: #222;
+    }
+
+    .references-list em {
+      font-style: italic;
+    }
+
+    .references-list .ref-link {
+      margin-left: 0.35rem;
+      font-size: 0.85rem;
+      color: #a31f34;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .references-list .ref-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== Header: white bar, red bottom line. MIT logo only. ===== -->
+  <header class="site-header">
+    <div class="bar">
+      <div class="brand">
+        <a href="../../index.html" aria-label="Home">
+          <span class="logo-mask">
+            <img src="../../image/mit-logo.png" alt="MIT Logo">
+          </span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrapper post" id="top">
+
+    <a class="post-back" href="../../index.html">&larr; Back to Home</a>
+
+    <article>
+      <nav class="lang-switch" aria-label="Language Switcher">
+        <a href="online-learning-from-experience.zh.html" hreflang="zh-Hans">中文版</a>
+        <a href="online-learning-from-experience.html" lang="en" aria-current="page">English Version</a>
+      </nav>
+
+      <h1 class="post-title">How Should Agents Train Online from Deployment Experience?</h1>
+      <p class="post-authors">
+        <span class="author-me">Huaibo Chen</span><sup>1</sup>,
+        Maohao Shen<sup>1</sup>,
+        Siru Ouyang<sup>2</sup>,
+        Dylan Zhang<sup>2</sup>,
+        Zexue He<sup>3</sup>,
+        Yingheng Wang<sup>4</sup>,
+        Xiaotong Zhang<sup>5</sup>,
+        Inkit Padhi<sup>5</sup>,
+        Subhajit Chaudhury<sup>5</sup>,
+        Gregory W. Wornell<sup>1</sup>,
+        Prasanna Sattigeri<sup>5</sup>,
+        Zhang-Wei Hong<sup>1</sup>,
+        Kamal Youcef-Toumi<sup>1</sup>
+      </p>
+      <div class="post-affil">
+        <ol>
+          <li><sup>1</sup>MIT</li>
+          <li><sup>2</sup>UIUC</li>
+          <li><sup>3</sup>Stanford University</li>
+          <li><sup>4</sup>Cornell University</li>
+          <li><sup>5</sup>MIT-IBM Watson AI Lab</li>
+        </ol>
+      </div>
+      <p class="post-venue">
+        October 2026
+      </p>
+
+      <p class="post-lede">
+        Recently, an increasing body of research has focused on how LLM agents can learn from their own interactive experiences post-deployment. For instance, after a Web Agent attempts several online shopping tasks, these experiences can be utilized to avoid previous mistakes and boost success rates in future attempts. This paradigm is commonly referred to as <em>test-time learning</em> or <em>learning from experience</em>.
+      </p>
+
+      <p>
+        Back in March this year, the dominant approach to test-time learning was memory: storing past experiences in a memory module and retrieving relevant memories into the context for future queries<sup class="citation-ref">[<a href="#ref-1">1</a>,<a href="#ref-2">2</a>,<a href="#ref-3">3</a>]</sup>. Around that time, we were thinking: <em>Can we learn from deployment experience via updating model parameters?</em> So our initial goal for this project was to do training on deployment experience. Over time, several concurrent works emerged that also explored test-time learning by updating model weights<sup class="citation-ref">[<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>. Yet, we felt that a critical piece was still missing in these works.
+      </p>
+
+      <p>
+        How did these existing works demonstrate the effectiveness of their algorithms? They typically plotted training steps on the x-axis and accuracy on the y-axis; a steady increase in accuracy was taken as an evidence that the model is learning from deployment experience<sup class="citation-ref">[<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>. But if test-time learning is evaluated this way, how does it differ from standard post-training? Post-training also shows improving accuracy over training steps. We gradually realized that merely demonstrating "accuracy gains" fails to capture the true essence of test-time learning. Guided by this perspective, we developed <a href="https://openreview.net/pdf?id=ZsATUr0EZ0" target="_blank" rel="noopener"><strong>Fast and Slow Online Learning (FSOL)</strong></a> (originally referred to as Fast and Slow Reinforcement Learning, FSRL, in our draft), which will be presented at the NeurIPS 2026 TTCL Workshop / LCFM Workshop. In this blog, we highlight three main insights from our work.
+      </p>
+
+      <h2>1. Test-time Learning Should Be Evaluated by Cumulative Performance</h2>
+
+      <p>
+        Standard post-training typically operates on a static dataset, using SFT or RL to train the model, and then evaluates the final checkpoint on a test set. Although the model traverses many intermediate checkpoints during training, we ultimately only care about the final checkpoint. Under this paradigm, it does not matter if intermediate checkpoints perform poorly.
+      </p>
+
+      <p>
+        Test-time learning, however, is fundamentally different. As illustrated in Figure 1, suppose an agent is deployed in production. When the first batch of queries arrives, the agent generates responses, receives feedback, and updates its parameters based on that feedback. When the second batch arrives, it is handled by the updated model, which receives further feedback and updates again. Consequently, every intermediate checkpoint is immediately deployed to handle real incoming queries, and every interaction directly impacts users. Intermediate performance matters immensely: the correctness or quality of <em>every single interaction</em> must count toward the evaluation.
+      </p>
+
+      <figure class="post-figure">
+        <img src="Fig1.png" alt="Online learning diagram: each checkpoint serves real users and updates based on feedback; every interaction contributes to cumulative performance.">
+        <figcaption>
+          <strong>Figure 1.</strong> The schematic of online learning. Each checkpoint serves real users, receives feedback, and updates into the next checkpoint, which means every single interaction across all checkpoints, rather than just the final one, contributes to cumulative performance.
+        </figcaption>
+      </figure>
+
+      <p>
+        This insight implies that if an online learner eventually achieves high ceiling accuracy at the expense of making numerous mistakes along the learning path, it still cannot be considered a successful online learner because all those errors are directly experienced by users. Therefore, what we optimize is not merely final performance, but <strong>cumulative performance across the entire interaction stream</strong>. This aligns naturally with the classic paradigm of online learning<sup class="citation-ref">[<a href="#ref-7">7</a>]</sup>: data arrives sequentially as a stream, and evaluation is conducted over the entire stream. Hence, we also use <em>online learning</em> as an umbrella term for this learning-from-deployment-experience paradigm.
+      </p>
+
+      <p>
+        Assuming binary rewards (\(0\) or \(1\)), the cumulative accuracy up to the \(N\)-th interaction can be defined as:
+      </p>
+
+      <p class="post-eq">
+        $$\mathrm{Acc}(N)=\frac{1}{N}\sum_{i=1}^{N} r_i$$
+      </p>
+
+      <p>
+        Equivalently, we can evaluate performance using a metric from online learning<sup class="citation-ref">[<a href="#ref-7">7</a>]</sup>, cumulative regret:
+      </p>
+
+      <p class="post-eq">
+        $$\mathrm{Regret}(N)=\sum_{i=1}^{N}\left(1-r_i\right)$$
+      </p>
+
+      <p>
+        Here we define the oracle policy that the online learner is compared with as the policy that always succeeds. Intuitively, cumulative regret measures the total number of errors made since deployment.
+      </p>
+
+      <p>
+        This perspective also shifts our understanding of learning curves. In Figure 2, we plot the curves of accuracy versus number of queries for algorithms A and B. Evaluated as offline learners, they might appear equally good since they reach the same final accuracy. But as online learners, Algorithm B clearly makes many more mistakes before "learning" the task, incurring a much higher cost of failure. For an online learner, what truly matters is the area under the accuracy&ndash;number of queries curve (this integral is proportional to cumulative accuracy) or equivalently the area between the curve and the y=1 line (equal to cumulative regret), rather than just the accuracy at the final checkpoint.
+      </p>
+
+      <figure class="post-figure">
+        <img src="Fig2.png" alt="Two learning curves with identical final accuracy: Algorithm A rises quickly while Algorithm B rises slowly, resulting in a much larger area under the curve for A.">
+        <figcaption>
+          <strong>Figure 2.</strong> Two algorithms with the same final accuracy are not equivalent as online learners. Algorithm A rises quickly whereas Algorithm B adapts slowly, giving A a much larger area under its accuracy&ndash;queries curve&mdash;or, equivalently, significantly lower cumulative regret.
+        </figcaption>
+      </figure>
+
+      <h2>2. Optimizing Cumulative Performance Requires Learning Fast and Learning Well: our method FSOL</h2>
+
+      <p>
+        Based on the cumulative objective, a natural decomposition emerges: the agent must achieve high performance ceiling (learning well), and it must reach that performance quickly (learning fast with high sample efficiency). Only by satisfying both conditions can we maximize the area under the accuracy&ndash;queries curve.
+      </p>
+
+      <p>
+        Existing paradigms generally satisfy only one side of this equation. The first category, <strong>memory-based methods</strong><sup class="citation-ref">[<a href="#ref-1">1</a>,<a href="#ref-2">2</a>,<a href="#ref-3">3</a>]</sup>, stores past successful experiences so that when a similar query is encountered, retrieved experiences can immediately serve as few-shot examples without requiring large volumes of data for stable gradient updates. Thus, memory excels at <em>fast adaptation</em>. However, memory suffers from a clear ceiling: it is bounded by the model's in-context learning capabilities<sup class="citation-ref">[<a href="#ref-8">8</a>,<a href="#ref-9">9</a>,<a href="#ref-10">10</a>]</sup>. When deeper changes in responses patterns are needed, such as longer reasoning chains or reliable tool-use strategies, simply in-context learning yields poor performance, especially for small models.
+      </p>
+
+      <p>
+        The second category, <strong>RL</strong>, directly updates model weights. The core strength of RL lies in fundamentally changing response patterns through weight updates, unlocking a much higher performance ceiling. Yet RL faces a major practical hurdle: it learns slowly. It usually requires thousands of rollouts. In an online setting, this drawback is compounded by the <em>single-rollout constraint</em>. In standard RL post-training (e.g., GRPO), one prompt can be rolled out 8 times to construct a comparative group. In real-world user interactions, however, each query usually comes with only a single feedback signal<sup class="citation-ref">[<a href="#ref-6">6</a>,<a href="#ref-11">11</a>]</sup>. A shopping agent cannot place 8 separate orders (incurring duplicate costs), nor can a conversational model output 8 alternative responses and ask users to rate each one. Online RL must operate on a <em>single rollout per query</em> (a constraint overlooked by many existing papers on test-time learning). Consequently, every rollout consumes a real user query, making sample efficiency paramount. Standard RL often yields a learning curve flat at first, rising slowly in the middle, and eventually surpassing memory. While acceptable for final-checkpoint metrics, under a cumulative objective, slow learning means more failures directly impact the user.
+      </p>
+
+      <p>
+        Inspired by Neural Episodic Control (NEC)<sup class="citation-ref">[<a href="#ref-12">12</a>,<a href="#ref-13">13</a>]</sup>, a classic work in the RL community, we realized that combining memory (analogous to episodic memory in NEC) and RL offers a path to achieving both speed and depth: <strong>Fast and Slow Online Learning (FSOL)</strong>. The core idea is: <strong>Memory handles fast adaptation, while RL manages slow internalization.</strong> The complete workflow is shown in Figure 3. Memory allows newly acquired successful experiences to immediately influence the next interaction; RL gradually internalizes interaction experiences into model weights over time.
+      </p>
+
+      <figure class="post-figure">
+        <img src="Fig3.png" alt="FSOL flowchart: for each batch in the task stream, memory is retrieved to guide rollout, trajectories are merged back into the memory bank, and an RL update is performed to update the agent.">
+        <figcaption>
+          <strong>Figure 3.</strong> The FSOL framework. For each batch in the task stream, every query undergoes: (1) retrieval from the memory bank, (2) rollout guided by retrieved memory, and (3) merging the trajectory back into memory. Once all queries in the batch are processed, (4) an RL update is performed to update the policy for the next batch.
+        </figcaption>
+      </figure>
+
+      <p>
+        This combination creates a genuine synergy. Early in training, a pure RL policy is weak and yields a low success rate, generating low-quality or failed rollouts with sparse positive learning signals. Integrating memory enables instant retrieval of past successes, elevating rollout quality and guiding exploration toward high-reward regions. Conversely, as the RL policy grows stronger, it generates higher-quality successful trajectories, which continually enrich the memory bank.
+      </p>
+
+      <p>
+        Importantly, FSOL is a general framework combining RL and memory rather than a single specific algorithm. In our experiments, we evaluated PPO<sup class="citation-ref">[<a href="#ref-14">14</a>]</sup> and REINFORCE++<sup class="citation-ref">[<a href="#ref-15">15</a>]</sup> for RL since they adhere to the single-rollout constraint, and raw action sequences as well as Agent Workflow Memory (AWM)<sup class="citation-ref">[<a href="#ref-2">2</a>]</sup> for memory. The empirical results demonstrate that across different memory representations and RL algorithms, FSOL consistently outperforms either component used alone, confirming that its gains do not depend on a specific memory structure or RL variant.
+        &nbsp;
+        We evaluated FSOL across four benchmark domains: Writing<sup class="citation-ref">[<a href="#ref-16">16</a>]</sup> (also used in<sup class="citation-ref">[<a href="#ref-11">11</a>]</sup>), WebShop<sup class="citation-ref">[<a href="#ref-17">17</a>]</sup>, ALFWorld<sup class="citation-ref">[<a href="#ref-18">18</a>]</sup>, and Search-augmented QA<sup class="citation-ref">[<a href="#ref-19">19</a>,<a href="#ref-20">20</a>]</sup> (Table 1). For each benchmark, training data was arranged into a continuous stream and shuffled by four random seeds, allowing the learner to process each query sequentially without overlap. FSOL achieved superior cumulative accuracy across all four benchmarks. The only exception occurred in the AWM + PPO combination on WebShop, primarily because AWM itself was ineffective on WebShop.
+      </p>
+
+      <div class="table-wrap">
+        <table class="post-table">
+          <caption>
+            <strong>Table 1.</strong> Overall accuracy across four benchmarks. AWM cannot be applied to Writing tasks due to the absence of workflow for single-step generation.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">Memory</th>
+              <th scope="col">WebShop</th>
+              <th scope="col">Search</th>
+              <th scope="col">ALFWorld</th>
+              <th scope="col">Writing</th>
+              <th scope="col">Average</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="rowgroup" class="cat-cell">Zero-shot</th>
+              <td>Zero-shot</td>
+              <td>4.0 &plusmn; 0.2</td>
+              <td>15.0 &plusmn; 0.0</td>
+              <td>13.0 &plusmn; 0.1</td>
+              <td>17.9 &plusmn; 0.3</td>
+              <td>12.5</td>
+            </tr>
+            <tr class="group-start">
+              <th scope="rowgroup" rowspan="2" class="cat-cell">Memory</th>
+              <td>Raw Memory</td>
+              <td>34.0 &plusmn; 1.0</td>
+              <td>33.8 &plusmn; 0.2</td>
+              <td>25.0 &plusmn; 0.5</td>
+              <td>68.7 &plusmn; 1.9</td>
+              <td>40.4</td>
+            </tr>
+            <tr>
+              <td>AWM</td>
+              <td>6.1 &plusmn; 0.7</td>
+              <td>33.8 &plusmn; 0.2</td>
+              <td>20.3 &plusmn; 0.6</td>
+              <td>&ndash;</td>
+              <td>&ndash;</td>
+            </tr>
+            <tr class="group-start">
+              <th scope="rowgroup" rowspan="2" class="cat-cell">RL</th>
+              <td>REINFORCE++</td>
+              <td>38.4 &plusmn; 5.6</td>
+              <td>35.8 &plusmn; 1.9</td>
+              <td>33.7 &plusmn; 3.8</td>
+              <td>79.8 &plusmn; 0.4</td>
+              <td>46.9</td>
+            </tr>
+            <tr>
+              <td>PPO</td>
+              <td>47.7 &plusmn; 2.7</td>
+              <td>35.1 &plusmn; 0.6</td>
+              <td>40.6 &plusmn; 3.9</td>
+              <td>49.7 &plusmn; 4.8</td>
+              <td>43.3</td>
+            </tr>
+            <tr class="row-ours group-start">
+              <th scope="rowgroup" rowspan="3" class="cat-cell">FSOL (Ours)</th>
+              <td>PPO + AWM</td>
+              <td>46.7 &plusmn; 2.9</td>
+              <td>37.8 &plusmn; 0.2</td>
+              <td>48.8 &plusmn; 3.0</td>
+              <td>&ndash;</td>
+              <td>&ndash;</td>
+            </tr>
+            <tr class="row-ours">
+              <td>PPO + Raw</td>
+              <td><strong>56.3 &plusmn; 0.9</strong></td>
+              <td>37.5 &plusmn; 0.6</td>
+              <td>50.9 &plusmn; 3.2</td>
+              <td>96.3 &plusmn; 0.5</td>
+              <td><strong>60.2</strong></td>
+            </tr>
+            <tr class="row-ours">
+              <td>REINFORCE++ + Raw</td>
+              <td>52.5 &plusmn; 1.5</td>
+              <td><strong>38.8 &plusmn; 0.9</strong></td>
+              <td><strong>52.1 &plusmn; 2.4</strong></td>
+              <td><strong>97.4 &plusmn; 0.3</strong></td>
+              <td><strong>60.2</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        To illustrate these dynamics, consider the Writing benchmark in Figure 4. In this task, the LLM continues a prompt in one of three candidate styles. The model does not know which style will be rewarded; a judge model evaluates whether the response matches the target style. Memory stores responses previously judged as matching the target style, while RL employs REINFORCE++. We can observe that memory adapts rapidly but saturates near a 0.7 accuracy plateau. RL starts slowly but eventually surpasses memory. FSOL matches the fast initial trajectory of memory while continuing to climb beyond memory's plateau toward nearly 100% accuracy. Crucially, FSOL achieves the maximum area under the curve, signifying optimal cumulative performance.
+      </p>
+
+      <figure class="post-figure figure-two-thirds">
+        <img src="Fig4.png" alt="Running accuracy vs. query count on Writing task: memory rises fast but plateaus near 0.7; RL starts slow but overtakes memory; FSOL starts as fast as memory and continues rising toward 1.0.">
+        <figcaption>
+          <strong>Figure 4.</strong> Learning dynamics on Writing Preference. Memory adapts quickly but plateaus around 0.7; RL starts slowly but eventually surpasses memory; FSOL combines fast adaptation with sustained growth toward 1.0, maximizing the area under the curve. (RL algorithm: REINFORCE++; memory: raw memory).
+        </figcaption>
+      </figure>
+
+      <h2>3. Evaluating Online Learning Demands More Than IID Streams</h2>
+
+      <p>
+        Another overlooked problem is: <em>the real-world interaction stream is usually not IID</em>. In Table 1 we only examine IID streams: gather queries, shuffle them, and let the agent learn online over the sequence. This is also the common practice in most online learning papers<sup class="citation-ref">[<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup> (only<sup class="citation-ref">[<a href="#ref-11">11</a>]</sup> considers distribution shifts). However, real-world streams are inherently dynamic. User preferences may shift over time, requiring an intelligent agent to track evolving preferences. Daily tasks may interleave writing, coding, and mathematical reasoning. Alternatively, an agent might shift from coding to web shopping for a period and then return to coding, where it should retain prior coding proficiency rather than relearn from scratch. To capture these deployment realities, we evaluated FSOL not only on stationary streams but also constructed dynamic benchmarks featuring distribution shifts, mixed-task streams, and sequential-task streams.
+      </p>
+
+      <h3>Distribution Shift</h3>
+
+      <p>
+        We investigated three distinct sources of distribution shift: reward rules, environment dynamics, and query distributions. In the Writing task, user style preference changed across three phases, rendering previously rewarded behaviors incorrect. In WebShop, the checkout sequence shifted from <code>product page &rarr; Buy Now</code> to <code>product page &rarr; Add to Cart &rarr; Checkout</code>, modifying environment dynamics while keeping queries and underlying rewards constant. In ALFWorld, we introduced query distribution shifts by drawing queries from distinct task subsets across phases.
+      </p>
+
+      <p>
+        Why are these settings crucial? Imagine that an agent spent 3,000 queries adapting to an old environment, and requires another 3,000 queries upon an environment update. This means the agent would deliver thousands of faulty responses to users every time it encounters an environment update. Thus, fast adaptation is vital to avoid repetitive performance loss. As shown in Figure 5, across all three shift types, FSOL consistently achieved the fastest recovery and maintained superior accuracy.
+      </p>
+
+      <figure class="post-figure figure-wide">
+        <img src="Fig5.png" alt="Running accuracy under three distribution shifts: Writing reward shift, WebShop environment shift, and ALFWorld query shift. FSOL recovers fastest after every dashed shift line.">
+        <figcaption>
+          <strong>Figure 5.</strong> Three forms of distribution shift. Left: Reward rule shift on Writing (rewarded style changes twice). Middle: Environment dynamics shift on WebShop (modified checkout workflow). Right: Query distribution shift on ALFWorld (queries drawn from distinct task subsets across phases). Dashed lines mark shift points; FSOL exhibits the fastest recovery and highest performance throughout. (RL: REINFORCE++; memory: raw memory).
+        </figcaption>
+      </figure>
+
+      <h3>Mixed Tasks</h3>
+
+      <p>
+        Next, we evaluated mixed-task streams by interleaving Writing and WebShop queries into a unified sequence. As shown in Figure 6, FSOL maintained higher task-specific running accuracy across both domains compared to standalone memory or RL baselines.
+      </p>
+
+      <figure class="post-figure figure-wide">
+        <img src="Fig6_mix.png" alt="Running accuracy on an interleaved Writing and WebShop stream, broken down by task; FSOL outperforms memory, RL, and zero-shot on both panels.">
+        <figcaption>
+          <strong>Figure 6.</strong> Interleaved stream containing both Writing and WebShop queries, with running accuracy plotted separately per task. Left: Writing. Right: WebShop. FSOL consistently outperforms pure memory and pure RL on both tasks. (RL: PPO; memory: raw memory).
+        </figcaption>
+      </figure>
+
+      <h3>Sequential Tasks</h3>
+
+      <p>
+        Finally, we evaluated sequential task transitions of the form <em>A</em> &rarr; <em>B</em> &rarr; <em>A</em> (specifically, Writing &rarr; WebShop &rarr; Writing). This setup evaluates two classic continual learning properties: <strong>plasticity</strong> (the ability to learn task B after task A) and <strong>retention</strong> (the ability to retain task A capability when returning to it). Our goal was to test whether learning WebShop shows plasticity, and whether returning to Writing shows catastrophic forgetting. Figure 7 illustrates the results. All three methods (Memory, RL, and FSOL) maintained strong plasticity: learning WebShop after Writing (solid line in phase 2) progressed at a rate nearly identical to learning WebShop from the base model (dashed line). Furthermore, upon returning to Writing in phase 3, accuracies fluctuated around their end-of-Phase-1 levels, demonstrating excellent retention without catastrophic forgetting.
+      </p>
+
+      <figure class="post-figure figure-wide">
+        <img src="Fig7_sequential.png" alt="Writing → WebShop → Writing three-phase experiment: phase 2 after Writing solid line matches phase 2 from Base dashed line; phase 3 returns to phase 1 final accuracy levels.">
+        <figcaption>
+          <strong>Figure 7.</strong> Sequential task stream: Writing &rarr; WebShop &rarr; Writing. Phase 2 compares learning WebShop after Writing (solid line) against learning WebShop directly from the base model (dashed line)&mdash;the close match indicates high plasticity. In Phase 3, accuracies across all three methods recover to their Phase 1 terminal performance levels, confirming skill retention. (RL: REINFORCE++; memory: raw memory).
+        </figcaption>
+      </figure>
+
+      <h2>Takeaways</h2>
+
+      <p>
+        To summarize, our work highlights three core takeaways for the community:
+      </p>
+
+      <p>
+        <strong>1.</strong> Evaluation for online agent learning should shift from final checkpoint accuracy to cumulative performance, because each interaction during the learning process directly impacts the user.
+      </p>
+
+      <p>
+        <strong>2.</strong> Maximizing cumulative performance demands both fast adaptation and deep skill internalization. Memory provides rapid non-parametric adaptation, while RL delivers slower but broader parametric tuning. FSOL bridges these two timescales to maximize cumulative performance.
+      </p>
+
+      <p>
+        <strong>3.</strong> Online agent benchmarks must look beyond stationary IID streams. Practical deployments encounter distribution shifts, interleaved task compositions, and task re-emergence. A comprehensive evaluation framework should systematically encompass stationary streams, distribution shifts, mixed tasks, and sequential task transitions. Our experimental results confirm that FSOL achieves consistent performance gains across all these realistic scenarios.
+      </p>
+
+      <p>
+        For further details, please refer to our paper: 
+        <a href="https://openreview.net/pdf?id=ZsATUr0EZ0" target="_blank" rel="noopener">Agent Online Learning Beyond Memory</a>.
+        Feedback and discussion are very welcome! Feel free to reach out at <a href="mailto:hbchen@mit.edu">hbchen [AT] mit.edu</a>.
+      </p>
+
+
+
+      <h2>Citation</h2>
+
+      <div class="cite-block">
+        <div class="cite-head">
+          <span>BibTeX</span>
+          <button class="cite-copy" type="button" data-copy-target="bibtex">Copy</button>
+        </div>
+        <pre id="bibtex"><code>@inproceedings{
+          chen2026agent,
+          title={Agent Online Learning Beyond Memory},
+          author={Huaibo Chen and Maohao Shen and Siru Ouyang and Dylan Zhang and Zexue He and Yingheng Wang and Xiaotong Zhang and Inkit Padhi and Subhajit Chaudhury and Gregory W. Wornell and Prasanna Sattigeri and Zhang-Wei Hong and KAMAL YOUCEF-TOUMI},
+          booktitle={NeurIPS 2026 Workshop on Towards Test-Time Continual Learning Agents},
+          year={2026},
+          url={https://openreview.net/forum?id=LtrVQShaq7}
+          }</code></pre>
+      </div>
+
+      <h2>References</h2>
+
+      <ol class="references-list">
+        <li id="ref-1">
+          <span class="ref-text">
+            Longtao Zheng, Rundong Wang, Xinrun Wang, and Bo An.
+            <em>Synapse: Trajectory-as-exemplar prompting with memory for computer control</em>.
+            In <em>International Conference on Learning Representations (ICLR)</em>, 2024.
+          </span>
+        </li>
+
+        <li id="ref-2">
+          <span class="ref-text">
+            Zora Zhiruo Wang, Jiayuan Mao, Daniel Fried, and Graham Neubig.
+            <em>Agent Workflow Memory</em>.
+            In <em>Proceedings of the 42nd International Conference on Machine Learning (ICML)</em>, 2025.
+          </span>
+        </li>
+
+        <li id="ref-3">
+          <span class="ref-text">
+            Siru Ouyang, Jun Yan, I-Hung Hsu, Yanfei Chen, Ke Jiang, Zifeng Wang, Rujun Han, Long Le, Samira Daruki, Xiangru Tang, Vishy Tirumalashetty, George Lee, Mahsan Rofouei, Hangfei Lin, Jiawei Han, Chen-Yu Lee, and Tomas Pfister.
+            <em>ReasoningBank: Scaling Agent Self-Evolving with Reasoning Memory</em>.
+            In <em>The Fourteenth International Conference on Learning Representations (ICLR)</em>, 2026.
+          </span>
+        </li>
+
+        <li id="ref-4">
+          <span class="ref-text">
+            Yinjie Wang, Xuyang Chen, Xiaolong Jin, Mengdi Wang, and Ling Yang.
+            <em>OpenClaw-RL: Train Any Agent Simply by Talking</em>.
+            arXiv preprint arXiv:2603.10165, 2026.
+          </span>
+        </li>
+
+        <li id="ref-5">
+          <span class="ref-text">
+            Tianzhu Ye, Li Dong, Qingxiu Dong, Xun Wu, Shaohan Huang, and Furu Wei.
+            <em>Online experiential learning for language models</em>.
+            arXiv preprint arXiv:2603.16856, 2026.
+          </span>
+        </li>
+
+        <li id="ref-6">
+          <span class="ref-text">
+            Linbo Liu, Yuzhe Lu, Youzhi Luo, Sijun Tan, Panpan Xu, and Luke Huan.
+            <em>Continual Learning via Real-Time RL for Agents</em>.
+            <em>rLLM Blog</em>, 2026.
+          </span>
+        </li>
+
+        <li id="ref-7">
+          <span class="ref-text">
+            Elad Hazan.
+            <em>Introduction to online convex optimization</em>.
+            <em>Foundations and Trends in Optimization</em>, 2(3-4):157&ndash;325, 2016.
+          </span>
+        </li>
+
+        <li id="ref-8">
+          <span class="ref-text">
+            Ekin Aky&uuml;rek, Mehul Damani, Adam Zweiger, Linlu Qiu, Han Guo, Jyothish Pari, Yoon Kim, and Jacob Andreas.
+            <em>The Surprising Effectiveness of Test-Time Training for Few-Shot Learning</em>.
+            In <em>Forty-second International Conference on Machine Learning (ICML)</em>, 2025.
+          </span>
+        </li>
+
+        <li id="ref-9">
+          <span class="ref-text">
+            Pengrui Han, Peiyang Song, Haofei Yu, and Jiaxuan You.
+            <em>In-context learning may not elicit trustworthy reasoning: A-not-b errors in pretrained language models</em>.
+            In <em>Findings of the Association for Computational Linguistics: EMNLP 2024</em>, pages 5624&ndash;5643, 2024.
+          </span>
+        </li>
+
+        <li id="ref-10">
+          <span class="ref-text">
+            Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou, et al.
+            <em>Chain-of-thought prompting elicits reasoning in large language models</em>.
+            <em>Advances in Neural Information Processing Systems (NeurIPS)</em>, 35:24824&ndash;24837, 2022.
+          </span>
+        </li>
+
+        <li id="ref-11">
+          <span class="ref-text">
+            Zhenyu Hou, Yujiang Li, Jie Tang, and Yuxiao Dong.
+            <em>Single-Rollout Asynchronous Optimization for Agentic Reinforcement Learning</em>.
+            arXiv preprint arXiv:2607.07508, 2026.
+          </span>
+        </li>
+
+        <li id="ref-12">
+          <span class="ref-text">
+            Alexander Pritzel, Benigno Uria, Sriram Srinivasan, Adria Puigdomenech Badia, Oriol Vinyals, Demis Hassabis, Daan Wierstra, and Charles Blundell.
+            <em>Neural episodic control</em>.
+            In <em>International Conference on Machine Learning (ICML)</em>, pages 2827&ndash;2836, 2017.
+          </span>
+        </li>
+
+        <li id="ref-13">
+          <span class="ref-text">
+            Matthew Botvinick, Sam Ritter, Jane X Wang, Zeb Kurth-Nelson, Charles Blundell, and Demis Hassabis.
+            <em>Reinforcement learning, fast and slow</em>.
+            <em>Trends in Cognitive Sciences</em>, 23(5):408&ndash;422, 2019.
+          </span>
+        </li>
+
+        <li id="ref-14">
+          <span class="ref-text">
+            John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov.
+            <em>Proximal policy optimization algorithms</em>.
+            arXiv preprint arXiv:1707.06347, 2017.
+          </span>
+        </li>
+
+        <li id="ref-15">
+          <span class="ref-text">
+            Jian Hu, Jason Klein Liu, Haotian Xu, and Wei Shen.
+            <em>REINFORCE++: Stabilizing critic-free policy optimization with global normalization</em>.
+            arXiv preprint arXiv:2501.03262, 2025.
+          </span>
+        </li>
+
+        <li id="ref-16">
+          <span class="ref-text">
+            Angela Fan, Mike Lewis, and Yann Dauphin.
+            <em>Hierarchical neural story generation</em>.
+            In <em>Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (ACL)</em>, pages 889&ndash;898, 2018.
+          </span>
+        </li>
+
+        <li id="ref-17">
+          <span class="ref-text">
+            Shunyu Yao, Howard Chen, John Yang, and Karthik Narasimhan.
+            <em>Webshop: Towards scalable real-world web interaction with grounded language agents</em>.
+            <em>Advances in Neural Information Processing Systems (NeurIPS)</em>, 35:20744&ndash;20757, 2022.
+          </span>
+        </li>
+
+        <li id="ref-18">
+          <span class="ref-text">
+            Mohit Shridhar, Xingdi Yuan, Marc-Alexandre C&ocirc;t&eacute;, Yonatan Bisk, Adam Trischler, and Matthew Hausknecht.
+            <em>ALFWorld: Aligning Text and Embodied Environments for Interactive Learning</em>.
+            arXiv preprint arXiv:2010.03768, 2021.
+          </span>
+        </li>
+
+        <li id="ref-19">
+          <span class="ref-text">
+            Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William Cohen, Ruslan Salakhutdinov, and Christopher D Manning.
+            <em>HotpotQA: A dataset for diverse, explainable multi-hop question answering</em>.
+            In <em>Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing (EMNLP)</em>, pages 2369&ndash;2380, 2018.
+          </span>
+        </li>
+
+        <li id="ref-20">
+          <span class="ref-text">
+            Tom Kwiatkowski, Jennimaria Palomaki, Olivia Redfield, Michael Collins, Ankur Parikh, Chris Alberti, Danielle Epstein, Illia Polosukhin, Jacob Devlin, Kenton Lee, et al.
+            <em>Natural questions: a benchmark for question answering research</em>.
+            <em>Transactions of the Association for Computational Linguistics (TACL)</em>, 7:453&ndash;466, 2019.
+          </span>
+        </li>
+      </ol>
+    </article>
+
+  </main>
+
+  <footer>
+    <div class="wrapper">
+      &copy; 2026 Huaibo Chen &middot; <a href="../../index.html">Home</a>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.cite-copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var el = document.getElementById(btn.dataset.copyTarget);
+        if (!el) return;
+        var text = el.innerText;
+        var done = function () {
+          var old = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(function () { btn.textContent = old; }, 1600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () { fallback(text, done); });
+        } else {
+          fallback(text, done);
+        }
+        function fallback(t, cb) {
+          var ta = document.createElement('textarea');
+          ta.value = t;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'absolute';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); cb(); } catch (e) { /* no-op */ }
+          document.body.removeChild(ta);
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>
