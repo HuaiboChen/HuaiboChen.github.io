@@ -292,12 +292,12 @@
       <p>
         更重要的是，FSOL 并不是某一个特定的算法，而是一个通用的 RL + memory 框架。实验里 RL 我们用了 PPO<sup class="citation-ref">[<a href="#ref-14">14</a>]</sup> 和
         REINFORCE++<sup class="citation-ref">[<a href="#ref-15">15</a>]</sup>（因为需要遵守single-rollout这个限制）；Memory 我们用了原轨迹（即 action sequence）和 Agent Workflow
-        Memory（AWM）<sup class="citation-ref">[<a href="#ref-2">2</a>]</sup>。实验结果显示，对不同 memory 形式和 RL 算法，FSOL 都能够超过只用其中一个成分的表现，这说明 FSOL
+        Memory（AWM）<sup class="citation-ref">[<a href="#ref-2">2</a>]</sup>。实验结果显示，对不同 memory 形式和 RL 算法，FSOL 都能够超过只用RL或者只用memory的表现，这说明 FSOL
         的收益并不依赖某个特定的 memory 形式或 RL 算法。
         
         我们在 Writing Preference<sup class="citation-ref">[<a href="#ref-16">16</a>,<a href="#ref-11">11</a>]</sup>、WebShop<sup class="citation-ref">[<a href="#ref-17">17</a>]</sup>、ALFWorld<sup class="citation-ref">[<a href="#ref-18">18</a>]</sup>、Search-augmented
         QA<sup class="citation-ref">[<a href="#ref-19">19</a>,<a href="#ref-20">20</a>]</sup> 四个 benchmarks 上测试了FSOL（如表 1）。对每一个benchmark，我们把训练集的数据构成一个data stream，然后用四个随机种子进行shuffle，让learner在stream上面从头至尾、无重叠地access每个query。
-        可以看出，FSOL在四个benchmark上都比只用memory或RL的表现要好，说明FSOL的收益并不依赖某个特定的memory形式或RL算法。唯一的例外是 AWM 和 PPO 的组合，因为 AWM 在 WebShop 上面本身就不太 work。
+        可以看出，FSOL在四个benchmark上都比只用memory或RL的表现要好，说明FSOL的收益并不依赖某个特定的memory形式或RL算法。唯一的例外是 AWM + PPO 在WebShop上的表现，因为 AWM 在 WebShop 上面本身就不太 work。
       </p>
 
       <div class="table-wrap">
