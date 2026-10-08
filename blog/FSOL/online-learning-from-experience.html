@@ -176,7 +176,7 @@
       <figure class="post-figure">
         <img src="Fig1.png" alt="Online learning diagram: each checkpoint serves real users and updates based on feedback; every interaction contributes to cumulative performance.">
         <figcaption>
-          <strong>Figure 1.</strong> The schematic of online learning. Each checkpoint serves real users, receives feedback, and updates into the next checkpoint, which means every single interaction across all checkpoints, rather than just the final one, contributes to cumulative performance.
+          <strong>Figure 1.</strong> The schematic of agent online learning. Each checkpoint serves real users, receives feedback, and updates into the next checkpoint, which means every single interaction across all checkpoints faces real users and should contribute to cumulative performance.
         </figcaption>
       </figure>
 
@@ -185,7 +185,7 @@
       </p>
 
       <p>
-        Assuming binary rewards (\(0\) or \(1\)), the cumulative accuracy up to the \(N\)-th interaction can be defined as:
+        Assuming binary rewards (\(0\) or \(1\)), the overall accuracy up to the \(N\)-th interaction can be defined as:
       </p>
 
       <p class="post-eq">
@@ -205,7 +205,7 @@
       </p>
 
       <p>
-        This perspective also shifts our understanding of learning curves. In Figure 2, we plot the curves of accuracy versus number of queries for algorithms A and B. Evaluated as offline learners, they might appear equally good since they reach the same final accuracy. But as online learners, Algorithm B clearly makes many more mistakes before "learning" the task, incurring a much higher cost of failure. For an online learner, what truly matters is the area under the accuracy&ndash;number of queries curve (this integral is proportional to cumulative accuracy) or equivalently the area between the curve and the y=1 line (equal to cumulative regret), rather than just the accuracy at the final checkpoint.
+        This perspective also shifts our understanding of learning curves. In Figure 2, we plot the curves of accuracy versus number of queries for algorithms A and B. Evaluated as offline learners, they might appear equally good since they reach the same final accuracy. But as online learners, Algorithm B clearly makes many more mistakes before "learning" the task, incurring a much higher cost of failure. For an online learner, what truly matters is the area under the accuracy&ndash;number of queries curve (this integral is proportional to overall accuracy) or equivalently the area between the curve and the y=1 line (equal to cumulative regret), rather than just the accuracy at the final checkpoint.
       </p>
 
       <figure class="post-figure">
@@ -226,11 +226,11 @@
       </p>
 
       <p>
-        The second category, <strong>RL</strong>, directly updates model weights. The core strength of RL lies in fundamentally changing response patterns through weight updates, unlocking a much higher performance ceiling. Yet RL faces a major practical hurdle: it learns slowly. It usually requires thousands of rollouts. In an online setting, this drawback is compounded by the <em>single-rollout constraint</em>. In standard RL post-training (e.g., GRPO), one prompt can be rolled out 8 times to construct a comparative group. In real-world user interactions, however, each query usually comes with only a single feedback signal<sup class="citation-ref">[<a href="#ref-6">6</a>,<a href="#ref-11">11</a>]</sup>. A shopping agent cannot place 8 separate orders (incurring duplicate costs), nor can a conversational model output 8 alternative responses and ask users to rate each one. Online RL must operate on a <em>single rollout per query</em> (a constraint overlooked by many existing papers on test-time learning). Consequently, every rollout consumes a real user query, making sample efficiency paramount. Standard RL often yields a learning curve flat at first, rising slowly in the middle, and eventually surpassing memory. While acceptable for final-checkpoint metrics, under a cumulative objective, slow learning means more failures directly impact the user.
+        The second category, <strong>RL</strong>, directly updates model weights. The core strength of RL lies in fundamentally changing response patterns through weight updates, unlocking a much higher performance ceiling. Yet RL faces a major practical hurdle: it learns slowly. It usually requires thousands of rollouts. In an online setting, this drawback is compounded by the <em>single-rollout constraint</em>. In standard RL post-training (e.g., GRPO), one prompt can be rolled out 8 times to construct a comparative group. In real-world user interactions, however, each query usually comes with only a single feedback signal<sup class="citation-ref">[<a href="#ref-6">6</a>,<a href="#ref-11">11</a>]</sup>. A shopping agent cannot place 8 separate orders (incurring duplicate costs), nor can a conversational model output 8 alternative responses and ask users to rate each one. Online RL must operate on a <em>single rollout per query</em> (a constraint overlooked by many existing papers on test-time learning). Consequently, every rollout consumes a real user query, making sample efficiency more paramount. Standard RL often yields a learning curve flat at first, rising slowly in the middle, and eventually surpassing memory. While acceptable for final-checkpoint metrics, under a cumulative objective, slow learning means more failures directly impact the user.
       </p>
 
       <p>
-        Inspired by Neural Episodic Control (NEC)<sup class="citation-ref">[<a href="#ref-12">12</a>,<a href="#ref-13">13</a>]</sup>, a classic work in the RL community, we realized that combining memory (analogous to episodic memory in NEC) and RL offers a path to achieving both speed and depth: <strong>Fast and Slow Online Learning (FSOL)</strong>. The core idea is: <strong>Memory handles fast adaptation, while RL manages slow internalization.</strong> The complete workflow is shown in Figure 3. Memory allows newly acquired successful experiences to immediately influence the next interaction; RL gradually internalizes interaction experiences into model weights over time.
+        Inspired by Neural Episodic Control (NEC)<sup class="citation-ref">[<a href="#ref-12">12</a>,<a href="#ref-13">13</a>]</sup>, a classic work in the RL community, we realized that combining memory (analogous to episodic memory in NEC) and RL offers a path to achieving both speed and depth: <strong>Fast and Slow Online Learning (FSOL)</strong>. The core idea is: <strong>Memory handles fast adaptation, while RL manages good long-run performance.</strong> The complete workflow is shown in Figure 3. Memory allows newly acquired successful experiences to immediately influence the next interaction; RL gradually internalizes interaction experiences into model weights over time.
       </p>
 
       <figure class="post-figure">
@@ -241,7 +241,7 @@
       </figure>
 
       <p>
-        This combination creates a genuine synergy. Early in training, a pure RL policy is weak and yields a low success rate, generating low-quality or failed rollouts with sparse positive learning signals. Integrating memory enables instant retrieval of past successes, elevating rollout quality and guiding exploration toward high-reward regions. Conversely, as the RL policy grows stronger, it generates higher-quality successful trajectories, which continually enrich the memory bank.
+        This combination creates a genuine synergy. Early in training, a pure RL policy is weak and yields a low success rate, generating low-quality or failed rollouts with sparse signals. Integrating memory enables instant retrieval of past successes, elevating rollout quality and guiding exploration toward high-reward regions. Conversely, as the RL policy grows stronger, it generates higher-quality successful trajectories, which continually enrich the memory bank.
       </p>
 
       <p>
@@ -340,7 +340,7 @@
       </div>
 
       <p>
-        To illustrate these dynamics, consider the Writing benchmark in Figure 4. In this task, the LLM continues a prompt in one of three candidate styles. The model does not know which style will be rewarded; a judge model evaluates whether the response matches the target style. Memory stores responses previously judged as matching the target style, while RL employs REINFORCE++. We can observe that memory adapts rapidly but saturates near a 0.7 accuracy plateau. RL starts slowly but eventually surpasses memory. FSOL matches the fast initial trajectory of memory while continuing to climb beyond memory's plateau toward nearly 100% accuracy. Crucially, FSOL achieves the maximum area under the curve, signifying optimal cumulative performance.
+        To illustrate learning dynamics, consider the Writing benchmark in Figure 4. In this task, the LLM continues a prompt in one of three candidate styles. The model does not know which style will be rewarded; a judge model evaluates whether the response matches the target style. Memory stores previous sucessful responses matching the target style, while RL employs REINFORCE++. We can observe that memory adapts rapidly but saturates near a 0.7 accuracy plateau. RL starts slowly but eventually surpasses memory. FSOL matches the fast initial trajectory of memory while continuing to climb beyond memory's plateau toward nearly 100% accuracy. Crucially, FSOL achieves the maximum area under the curve, signifying optimal cumulative performance.
       </p>
 
       <figure class="post-figure figure-two-thirds">
@@ -389,7 +389,7 @@
       <h3>Sequential Tasks</h3>
 
       <p>
-        Finally, we evaluated sequential task transitions of the form <em>A</em> &rarr; <em>B</em> &rarr; <em>A</em> (specifically, Writing &rarr; WebShop &rarr; Writing). This setup evaluates two classic continual learning properties: <strong>plasticity</strong> (the ability to learn task B after task A) and <strong>retention</strong> (the ability to retain task A capability when returning to it). Our goal was to test whether learning WebShop shows plasticity, and whether returning to Writing shows catastrophic forgetting. Figure 7 illustrates the results. All three methods (Memory, RL, and FSOL) maintained strong plasticity: learning WebShop after Writing (solid line in phase 2) progressed at a rate nearly identical to learning WebShop from the base model (dashed line). Furthermore, upon returning to Writing in phase 3, accuracies fluctuated around their end-of-Phase-1 levels, demonstrating excellent retention without catastrophic forgetting.
+        Finally, we evaluated sequential task transitions of the form <em>A</em> &rarr; <em>B</em> &rarr; <em>A</em> (specifically, Writing &rarr; WebShop &rarr; Writing). This setup evaluates two classic continual learning properties: <strong>plasticity</strong> (the ability to learn task B after task A) and <strong>retention</strong> (the ability to retain task A capability when returning to it). Figure 7 illustrates the results. All three methods (Memory, RL, and FSOL) maintained strong plasticity: learning WebShop after Writing (solid line in phase 2) progressed at a rate nearly identical to learning WebShop from the base model (dashed line). Furthermore, upon returning to Writing in phase 3, accuracies fluctuated around their end-of-Phase-1 levels, demonstrating excellent retention without catastrophic forgetting.
       </p>
 
       <figure class="post-figure figure-wide">

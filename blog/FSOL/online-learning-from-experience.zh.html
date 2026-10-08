@@ -410,7 +410,7 @@
 
       <p>
         还有一个我们认为经常被低估的问题：interaction stream 应该长什么样？最简单的实验当然是像表1的实验设置一样，准备一堆 queries，shuffle
-        一下，然后让 agent 一边做一边学。当前的work大部分也都是这么做的<sup class="citation-ref">[<a href="#ref-4">2</a>,<a href="#ref-4">3</a>,<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>。但如果想贴近真实部署的条件，那么只做
+        一下，然后让 agent 一边做一边学。当前的work大部分也都是这么做的<sup class="citation-ref">[<a href="#ref-4">2</a>,<a href="#ref-4">3</a>,<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup> （除了<sup class="citation-ref">[<a href="#ref-11">11</a>]</sup>考虑了distribution shifts）。但如果想贴近真实部署的条件，那么只做
         stationary IID stream 是远远不够的。真实世界里，stream
         本身就是会变化的。有可能我今天对某种写作风格有偏好，但一周以后就变了，聪明的 agent
         应该去 track 用户偏好的变化。也可能我每天的任务掺杂了写作、代码、数学，都是完全不同的任务类型。也可能我之前一直集中于写代码，最近用这个模型做了很多
