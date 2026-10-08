@@ -130,12 +130,12 @@
         Dylan Zhang<sup>2</sup>,
         Zexue He<sup>3</sup>,
         Yingheng Wang<sup>4</sup>,
-        Xiaotong Zhang<sup>5</sup>,
+        Xiaotong Zhang<sup>1</sup>,
         Inkit Padhi<sup>5</sup>,
         Subhajit Chaudhury<sup>5</sup>,
         Gregory W. Wornell<sup>1</sup>,
         Prasanna Sattigeri<sup>5</sup>,
-        Zhang-Wei Hong<sup>1</sup>,
+        Zhang-Wei Hong<sup>5</sup>,
         Kamal Youcef-Toumi<sup>1</sup>
       </p>
       <div class="post-affil">
@@ -165,7 +165,7 @@
       </p>
 
       <p>
-        这些文章是怎么展示学习效果的呢？就是横轴画步数，纵轴画精度，如果精度稳步提升，那就说明经验被训进模型里了<sup class="citation-ref">[<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>。假如通过这样的方式评估
+        这些文章是怎么展示学习效果的呢？就是横轴画步数，纵轴画精度，如果精度提升，那就说明经验被训进模型里了<sup class="citation-ref">[<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>。假如通过这样的方式评估
         test-time learning，这和后训练又有什么区别呢？后训练也是随着步数增加，精度提高。我们逐渐意识到，仅仅证明“精度有提升”，其实并没有抓住
         test-time learning 的本质。于是我们就按照我们的理解做了一些工作，提出了
         <a href="https://openreview.net/pdf?id=ZsATUr0EZ0" target="_blank" rel="noopener"><strong>Fast
@@ -185,7 +185,7 @@
         然而，test-time learning 完全不同。如图 1 所示，假设一个 Agent 已经正式上线。第一批 queries 到达后，Agent
         给出回答、收到反馈，并根据反馈更新参数；随后第二批 queries
         到达，由刚刚更新后的模型进行回答，再获得反馈、再次更新。这个过程不断重复。这意味着，每一个中间 checkpoint
-        都会立即被用于处理后续的真实 query，而每一次 interaction 都直接面向用户。因此，中间 checkpoint
+        都会立即被用于处理后续的真实 query，而每一次 interaction 都影响用户的体验。因此，中间 checkpoint
         的表现同样非常重要。每一次 interaction 的对错（或质量）都应该计入最终的评估。
       </p>
 
@@ -193,13 +193,13 @@
         <img src="Fig1.png" alt="在线学习示意图：每个 checkpoint 服务用户并根据反馈更新，每一次交互都计入 cumulative performance。">
         <figcaption>
           <strong>图 1.</strong> 部署中的在线学习。每个 checkpoint 都在服务真实用户、接收反馈，并被更新为下一个
-          checkpoint&mdash;&mdash;因此每个 checkpoint 的每一次交互，而不只是最后那个，都计入 cumulative performance。
+          checkpoint&mdash;&mdash;因此每个 checkpoint 的每一次交互，都应计入 cumulative performance。
         </figcaption>
       </figure>
 
       <p>
         这也意味着，如果一个 online learner
-        最终确实能够达到很高的精度，但代价是它在学习过程中犯了很多次错误，那么这些错误全部都会被用户感知到，从而大大影响用户满意度。因此，我们真正应该优化的，并不是最终性能，而是<strong>整个
+        最终确实能够达到很高的精度，但代价是它在学习过程中犯了很多次错误，那么这些错误全部都会直接影响用户。因此，我们真正应该优化的，并不是最终性能，而是<strong>整个
         interaction stream 上的 cumulative performance</strong>。这与机器学习的经典方向在线学习（Online
         Learning）是一样的范式<sup class="citation-ref">[<a href="#ref-7">7</a>]</sup>：数据是流式到达的，且评估是在整个 data stream 上面。所以后面我们也用在线学习来代指从部署经验中学习这种范式。
       </p>
@@ -221,7 +221,7 @@
       </p>
 
       <p>
-        这里我们设用于和learner比较的oracle policy是每个query都能成功的理想policy。直观来说，这个指标实际上是在问从部署开始到现在，我们一共犯了多少错误。
+        这里我们设用于和learner比较的oracle policy是每个query都能成功的理想policy。直观来说，这个指标表示从部署开始到现在，我们一共犯了多少错误。
       </p>
 
       <p>
@@ -244,7 +244,7 @@
 
       <p>
         从 cumulative performance
-        出发，一个非常自然的分解就出现了：一方面，最终收敛的模型表现要足够好；另一方面，达到这一表现要足够快，也就是样本效率要高。只有这样才能最大化
+        出发，一个非常自然的分解就出现了：一方面，最终收敛的表现要足够好；另一方面，达到这一表现要足够快，也就是样本效率要高。只有这样才能最大化
         accuracy&ndash;num of queries 曲线下面积。
       </p>
 
@@ -268,7 +268,7 @@
       </p>
 
       <p>
-        受到 RL community 经典之作 Neural Episodic Control（NEC）<sup class="citation-ref">[<a href="#ref-12">12</a>,<a href="#ref-13">13</a>]</sup>的启发，我们认为把 memory（对应 NEC 里的 episodic
+        受到 RL 经典之作 Neural Episodic Control（NEC）<sup class="citation-ref">[<a href="#ref-12">12</a>,<a href="#ref-13">13</a>]</sup>的启发，我们认为把 memory（对应 NEC 里的 episodic
         memory）和 RL 结合刚好可以实现又快又好，于是就有了 Fast and Slow Online Learning，FSOL。核心结构就是：<strong>Memory
         负责 fast，RL 负责 slow。</strong>其流程如图 3 所示。Memory 让刚刚获得的 successful experience 可以马上影响下一个
         interaction；RL 则把 interaction experience 慢慢 internalize 到 model weights 里。
@@ -283,7 +283,7 @@
       </figure>
 
       <p>
-        而且二者不只是“两条曲线取长补短”，而是二者结合更像一种 synergy。在训练初期，纯 RL policy 可能很弱，成功率低，那么大部分
+        而且二者不只是“取长补短”，更像是一种 synergy。在训练初期，纯 RL policy 可能很弱，成功率低，那么大部分
         rollout 都是低质量甚至失败的，RL 得到的 positive learning signal 也很 sparse。一旦加入 memory，过去的成功经验能够立刻被
         retrieve，于是 rollout quality 会提高，探索更容易进入高 reward 区域。反过来也一样，随着 RL policy 逐渐变强，它自己产生的
         successful trajectory 会越来越多、质量越来越高，而这些新的 successful experience 又会进入 memory。
@@ -410,7 +410,7 @@
 
       <p>
         还有一个我们认为经常被低估的问题：interaction stream 应该长什么样？最简单的实验当然是像表1的实验设置一样，准备一堆 queries，shuffle
-        一下，然后让 Agent 一边做一边学。当前的work大部分也都是这么做的<sup class="citation-ref">[<a href="#ref-4">2</a>,<a href="#ref-4">3</a>,<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>。但如果想贴近真实部署的条件，那么只做
+        一下，然后让 agent 一边做一边学。当前的work大部分也都是这么做的<sup class="citation-ref">[<a href="#ref-4">2</a>,<a href="#ref-4">3</a>,<a href="#ref-4">4</a>,<a href="#ref-5">5</a>,<a href="#ref-6">6</a>]</sup>。但如果想贴近真实部署的条件，那么只做
         stationary IID stream 是远远不够的。真实世界里，stream
         本身就是会变化的。有可能我今天对某种写作风格有偏好，但一周以后就变了，聪明的 agent
         应该去 track 用户偏好的变化。也可能我每天的任务掺杂了写作、代码、数学，都是完全不同的任务类型。也可能我之前一直集中于写代码，最近用这个模型做了很多
@@ -424,15 +424,14 @@
         首先是 distribution shift。这里我们设置了三种不同的 shift 来源：reward rules、环境，和 query
         distributions。比如 Writing task 里，系统一开始偏好一种写作风格，之后偏好另一种，再之后又变成第三种，昨天的正确行为，今天可能已经变成错误行为。再比如
         WebShop，一开始的购买流程可能是 product page &rarr; Buy Now，后来网站改版变成 product page &rarr; Add to Cart
-        &rarr; Checkout。这里用户 query 没变，reward definition 也没本质变化，变的是 environment dynamics。还有
+        &rarr; Checkout。还有
         ALFWorld，我们则构造了 query distribution shift，让前半段和后半段来自不同 task subsets。论文中的
-        distribution-shift 实验正好覆盖了 reward rule、environment dynamics 和 query distribution 三种变化。
+        distribution shift 实验正好覆盖了 reward rule、environment dynamics 和 query distribution 三种变化。
       </p>
 
       <p>
-        这些 setting 为什么重要？因为一旦 shift 发生，学习速度重新变得重要。假设你的 RL 已经花了 3000 个 query
-        学会旧 environment，突然网站改版，如果你又需要 3000 个 query 才重新学会，那么这过程中用户收到的全是错误的回答。每次一改版，agent就又要花3000个query重新学一遍，完全是在挑战用户的耐心。这也是 learn
-        fast 变得非常重要的地方。结果如图 5 所示，可以看到，在三种不同的 shift 条件下，FSOL 都是 recover
+        这些 setting 为什么重要？因为一旦 shift 发生，agent又要重新适应，这个过程中生成的回答都是错误的，或者不符合用户偏好的。假设 agent 已经花了 3000 个 query
+        学会旧的 environment，突然网站改版，如果你又需要 3000 个 query 才重新学会，每次一改版就又要花3000个query重新学一遍，完全是在挑战用户的耐心。这个时候，fast adaptation就变得非常重要。我们的实验结果如图 5 所示，可以看到，在三种不同的 shift 条件下，FSOL 都是 recover
         最快、精度一直领先其他方法的。
       </p>
 
@@ -466,8 +465,7 @@
         最后是 sequential tasks，也就是 <em>A</em> &rarr; <em>B</em> &rarr; <em>A</em>。比如我们的实验里是 Writing
         &rarr; WebShop &rarr; Writing。这个 setting 问的是 continual learning 里两个很经典的问题：第一，学完 A
         以后还能不能学 B，也就是 plasticity；第二，学完 B 以后，再回到 A，还记不记得原来的能力，也就是
-        retention。我们的实验就是为了检验从 Writing 迁移到 WebShop 时的 plasticity，以及回到 Writing
-        后之前学到的能力是否仍被保留。结果如图 7 所示。这里可以看到，memory、RL 和 FSOL 都做到了：在学习 WebShop 的时候，直接从
+        retention。结果如图 7 所示。这里可以看到，memory、RL 和 FSOL 都做到了：在学习 WebShop 的时候，直接从
         base model 开始（中间图的虚线）和先学 Writing 再学 WebShop（中间图的实线）进度很接近，有足够的
         plasticity；在第三个阶段的时候，三种方法的精度也都围绕着第一阶段末尾的精度上下波动，没有把之前学的能力忘掉。
       </p>
